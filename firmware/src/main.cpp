@@ -94,6 +94,7 @@ void read(long *_readings)
         }
     }
     digitalWrite(CLOCK_PIN, 1); // gain = 128, refer to HX711 datasheet
+    delayMicroseconds(1);
     digitalWrite(CLOCK_PIN, 0);
 
     // sign extension 24 -> 32
