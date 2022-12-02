@@ -7,15 +7,15 @@
 
 // constants
 const int NUM_CELLS = 6;                            //
-const int ZERO_PIN = 12;                            // zero button pin, internally pulled up
-const int CLOCK_PIN = 2;                            //
+const int ZERO_PIN = 12;                            // zero button pin, internally pulled up (active low)
+const int CLOCK_PIN = 2;                            // common clock pin for all cells
 const int DOUT_PIN[NUM_CELLS] = {3, 4, 5, 6, 7, 8}; // DOUT pins of each cell
 const double SCALE_NEWTON[NUM_CELLS] = {
     // newton per readings (subject to change)
-    4.51e-5, // cell 1
-    4.77e-5, // cell 2
-    4.64e-5, // cell 3
-    4.75e-5, // cell 4
+    4.63e-5, // cell 1
+    4.52e-5, // cell 2
+    4.77e-5, // cell 3
+    4.64e-5, // cell 4
     4.64e-5, // cell 5
     4.75e-5  // cell 6
 };
@@ -37,17 +37,18 @@ bool areReady();
 void setup()
 {
     Serial.begin(38400);
-    Serial.println("Starting up...");
+    // Serial.println("Starting up...");
 
     pinMode(CLOCK_PIN, OUTPUT);
     digitalWrite(CLOCK_PIN, 0);
     pinMode(ZERO_PIN, INPUT_PULLUP);
     for (int i = 0; i < NUM_CELLS; i++)
         pinMode(DOUT_PIN[i], INPUT);
-    calibrate();
+    zeroAll();
 
-    Serial.println("All set.");
-    StartTime = millis();
+    // Serial.println("All set.");
+    // Serial.println(" Time (ms), Cell 1 (N), Cell 2 (N), Cell 3 (N), Cell 4 (N), Cell 5 (N), Cell 6 (N)");
+    // StartTime = millis();
 }
 
 void loop()
@@ -72,9 +73,10 @@ void loop()
 
 void zeroAll()
 {
-    Serial.println("Zeroing all...");
+    // Serial.println("Zeroing all...");
     calibrate();
-    Serial.println("Done.");
+    // Serial.println("Done.");
+    Serial.println("\n Time (ms), Cell 1 (N), Cell 2 (N), Cell 3 (N), Cell 4 (N), Cell 5 (N), Cell 6 (N)");
     StartTime = millis();
 }
 
