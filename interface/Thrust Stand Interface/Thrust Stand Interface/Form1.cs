@@ -16,12 +16,19 @@ namespace Thrust_Stand_Interface
     public partial class Form1 : Form
     {
         private bool connected = false;
-        private ulong time;
-        private double[] datas = { 0, 0, 0, 0, 0, 0 };
+        private ulong time = 0;
+        private double[] datas = { 0, 0, 0, 0, 0, 0, 0 };
         private char[] delimiters = { ',', ' ', '\t' };
         private string incoming;
 
         delegate void SetTextCallback(string text);
+
+        public Form1()
+        {
+            InitializeComponent();
+            refreshAvailablePorts();
+            //chart1.Show();
+        }
 
         private void SetText(string text)
         {
@@ -32,7 +39,6 @@ namespace Thrust_Stand_Interface
             {
                 SetTextCallback d = new SetTextCallback(SetText);
                 Invoke(d, new object[] { text });
-                //this.Invoke(d, new object[] { text });
             }
             else
             {
@@ -42,10 +48,8 @@ namespace Thrust_Stand_Interface
                 {
                     time = Convert.ToUInt64(dataStrings[0]);
                 }
-                catch
-                {
-                    time = time;
-                }
+                catch { }
+
                 for (int i = 0; i < 6; i++)
                 {
                     try
@@ -56,13 +60,6 @@ namespace Thrust_Stand_Interface
                 }
                 updateChart();
             }
-        }
-
-        public Form1()
-        {
-            InitializeComponent();
-            refreshAvailablePorts();
-            chart1.Show();
         }
 
         void refreshAvailablePorts()
@@ -91,6 +88,7 @@ namespace Thrust_Stand_Interface
             {
                 if (serialPort1.IsOpen) serialPort1.Close();
                 serialSendButton.Enabled = false;
+                textBox1.Enabled = false;
                 connected = false;
 
                 label2.Text = "Disconnected";
@@ -121,6 +119,7 @@ namespace Thrust_Stand_Interface
                 if (serialPort1.IsOpen)
                 {
                     serialSendButton.Enabled = true;
+                    textBox1.Enabled = true;
                     connected = true;
 
                     label2.Text = "Connected";
@@ -153,7 +152,7 @@ namespace Thrust_Stand_Interface
             catch (Exception ex)
             {
                 //MessageBox.Show(Convert.ToString(ex));
-                serialPort1.Close();
+                if (serialPort1.IsOpen) serialPort1.Close();
             }
         }
 
@@ -167,6 +166,7 @@ namespace Thrust_Stand_Interface
         private void clearTerminalButton_Click(object sender, EventArgs e)
         {
             richTextBox1.Clear();
+            time = 0;
         }
 
         private void comboBox1_MouseDown(object sender, MouseEventArgs e)
@@ -186,7 +186,23 @@ namespace Thrust_Stand_Interface
         {
             for (int i = 0; i < 6; i++)
                 chart1.Series[i].Points.Clear();
+            time = 0;
         }
-        
+
+        private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            //MessageBox.Show(Convert.ToString(Convert.ToInt32(e.KeyChar)));
+            if (Convert.ToInt32(e.KeyChar) == 13)
+            {
+                string outcoming = textBox1.Text;
+                textBox1.Clear();
+                if (serialPort1.IsOpen) serialPort1.Write(outcoming);
+            }
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            time++;
+        }
     }
 }

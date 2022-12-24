@@ -59,15 +59,5 @@ namespace Thrust_Stand_Interface.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap UBC_UAS_Logo_2022 {
-            get {
-                object obj = ResourceManager.GetObject("UBC UAS Logo 2022", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
     }
 }
