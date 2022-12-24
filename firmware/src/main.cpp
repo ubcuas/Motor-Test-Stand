@@ -36,7 +36,7 @@ bool areReady();
 
 void setup()
 {
-    Serial.begin(38400);
+    Serial.begin(115200);
     // Serial.println("Starting up...");
 
     pinMode(CLOCK_PIN, OUTPUT);
@@ -57,18 +57,22 @@ void loop()
     if (areReady())
     {
         read(Readings);
-        sprintf(LineBuffer, "%10ld", Time - StartTime);
+        sprintf(LineBuffer, "%ld", Time - StartTime);
         for (int i = 0; i < NUM_CELLS; i++)
         {
-            dtostrf((double)(Readings[i] - Offsets[i]) * SCALE_NEWTON[i], 10, 2, ValueBuffer);
-            strcat(LineBuffer, ", ");
+            dtostrf((double)(Readings[i] - Offsets[i]) * SCALE_NEWTON[i], 0, 2, ValueBuffer);
+            strcat(LineBuffer, ",");
             strcat(LineBuffer, ValueBuffer);
         }
         Serial.println(LineBuffer);
     }
 
-    if (digitalRead(ZERO_PIN) == 0)
-        zeroAll();
+    if (Serial.available())
+    {
+        if (Serial.read() == 'C')
+            zeroAll();
+    }
+    delay(10);
 }
 
 void zeroAll()
@@ -76,7 +80,7 @@ void zeroAll()
     // Serial.println("Zeroing all...");
     calibrate();
     // Serial.println("Done.");
-    Serial.println("\n Time (ms), Cell 1 (N), Cell 2 (N), Cell 3 (N), Cell 4 (N), Cell 5 (N), Cell 6 (N)");
+    //Serial.println("\n Time (ms), Cell 1 (N), Cell 2 (N), Cell 3 (N), Cell 4 (N), Cell 5 (N), Cell 6 (N)");
     StartTime = millis();
 }
 

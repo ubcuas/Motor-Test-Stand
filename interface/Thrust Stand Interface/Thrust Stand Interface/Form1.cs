@@ -10,6 +10,8 @@ using System.Windows.Forms;
 using System.IO.Ports;
 using System.Linq.Expressions;
 using static System.Net.Mime.MediaTypeNames;
+using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace Thrust_Stand_Interface
 {
@@ -20,6 +22,7 @@ namespace Thrust_Stand_Interface
         private double[] datas = { 0, 0, 0, 0, 0, 0, 0 };
         private char[] delimiters = { ',', ' ', '\t' };
         private string incoming;
+        private int baud;
 
         delegate void SetTextCallback(string text);
 
@@ -27,7 +30,6 @@ namespace Thrust_Stand_Interface
         {
             InitializeComponent();
             refreshAvailablePorts();
-            //chart1.Show();
         }
 
         private void SetText(string text)
@@ -35,7 +37,7 @@ namespace Thrust_Stand_Interface
             // InvokeRequired required compares the thread ID of the
             // calling thread to the thread ID of the creating thread.
             // If these threads are different, it returns true.
-            if (this.textBox1.InvokeRequired)
+            if (textBox1.InvokeRequired)
             {
                 SetTextCallback d = new SetTextCallback(SetText);
                 Invoke(d, new object[] { text });
@@ -65,17 +67,27 @@ namespace Thrust_Stand_Interface
         void refreshAvailablePorts()
         {
             string[] ports = SerialPort.GetPortNames();
-            comboBox1.Items.Clear();
-            comboBox1.Items.AddRange(ports);
+            portSelect.Items.Clear();
+            portSelect.Items.AddRange(ports);
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
             button1.Enabled = false;
 
-            if (comboBox1.Text.Length == 0)
+            if (portSelect.Text.Length == 0)
             {
                 string message = "No port selected";
+                string caption = "Incomplete Parameter";
+                MessageBoxButtons buttons = MessageBoxButtons.OK;
+                MessageBox.Show(message, caption, buttons);
+
+                button1.Enabled = true;
+                return;
+            }
+            if (baudRateSelect.Text.Length == 0 || !int.TryParse(baudRateSelect.Text, out baud))
+            {
+                string message = "Invalid baud rate selected";
                 string caption = "Incomplete Parameter";
                 MessageBoxButtons buttons = MessageBoxButtons.OK;
                 MessageBox.Show(message, caption, buttons);
@@ -95,13 +107,15 @@ namespace Thrust_Stand_Interface
                 label2.ForeColor = Color.Red;
                 button1.Text = "Connect";
                 refreshAvailablePorts();
-                comboBox1.Enabled = true;
+                portSelect.Enabled = true;
+                baudRateSelect.Enabled = true;
             }
             else
             {
                 try
                 {
-                    serialPort1.PortName = comboBox1.Text;
+                    serialPort1.PortName = portSelect.Text;
+                    serialPort1.BaudRate = baud;
                     serialPort1.Open();
                 }
                 catch
@@ -113,7 +127,8 @@ namespace Thrust_Stand_Interface
                     MessageBoxButtons buttons = MessageBoxButtons.OK;
                     MessageBox.Show(message, caption, buttons);
 
-                    comboBox1.Enabled = true;
+                    portSelect.Enabled = true;
+                    baudRateSelect.Enabled = true;
                 }
 
                 if (serialPort1.IsOpen)
@@ -125,7 +140,8 @@ namespace Thrust_Stand_Interface
                     label2.Text = "Connected";
                     label2.ForeColor = Color.Green;
                     button1.Text = "Disconnect";
-                    comboBox1.Enabled = false;
+                    portSelect.Enabled = false;
+                    baudRateSelect.Enabled = false;
                 }
                 else
                 {
@@ -160,13 +176,23 @@ namespace Thrust_Stand_Interface
         {
             string outcoming = textBox1.Text;
             textBox1.Clear();
-            serialPort1.Write(outcoming);
+            if (serialPort1.IsOpen) serialPort1.Write(outcoming);
         }
 
-        private void clearTerminalButton_Click(object sender, EventArgs e)
+        private void clearButton_Click(object sender, EventArgs e)
         {
-            richTextBox1.Clear();
+            if (serialPort1.IsOpen)
+            {
+                serialPort1.Write("C");
+                serialPort1.DiscardInBuffer();
+            }
             time = 0;
+            for (int i = 0; i < 6; i++)
+            {
+                datas[i] = 0;
+                chart1.Series[i].Points.Clear();
+            }
+            richTextBox1.Clear();
         }
 
         private void comboBox1_MouseDown(object sender, MouseEventArgs e)
@@ -182,13 +208,6 @@ namespace Thrust_Stand_Interface
             }
         }
 
-        private void clearChartButton_Click(object sender, EventArgs e)
-        {
-            for (int i = 0; i < 6; i++)
-                chart1.Series[i].Points.Clear();
-            time = 0;
-        }
-
         private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
         {
             //MessageBox.Show(Convert.ToString(Convert.ToInt32(e.KeyChar)));
@@ -200,9 +219,19 @@ namespace Thrust_Stand_Interface
             }
         }
 
-        private void timer1_Tick(object sender, EventArgs e)
+        private void exportButton_Click(object sender, EventArgs e)
         {
-            time++;
+            saveFileDialog1.ShowDialog();
+            //MessageBox.Show(Convert.ToString(saveFileDialog1.FileName));
+        }
+
+        private void saveFileDialog1_FileOk(object sender, CancelEventArgs e)
+        {
+            string path = saveFileDialog1.FileName;
+            using (StreamWriter sw = File.CreateText(path))
+            {
+                sw.WriteLine(richTextBox1.Text);
+            }
         }
     }
 }
