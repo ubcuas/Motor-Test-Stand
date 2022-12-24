@@ -72,7 +72,7 @@ void loop()
         if (Serial.read() == 'C')
             zeroAll();
     }
-    delay(10);
+    // delay(10); // to prevent serial buffer filling too quickly
 }
 
 void zeroAll()
