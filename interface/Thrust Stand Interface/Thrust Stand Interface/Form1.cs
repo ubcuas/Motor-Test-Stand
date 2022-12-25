@@ -17,12 +17,13 @@ namespace Thrust_Stand_Interface
 {
     public partial class Form1 : Form
     {
-        private bool connected = false;
         private ulong time = 0;
         private double[] datas = { 0, 0, 0, 0, 0, 0, 0 };
         private char[] delimiters = { ',', ' ', '\t' };
         private string incoming;
         private int baud;
+        private int value = 1000;
+        private bool isRunning = false;
 
         delegate void SetTextCallback(string text);
 
@@ -75,33 +76,12 @@ namespace Thrust_Stand_Interface
         {
             button1.Enabled = false;
 
-            if (portSelect.Text.Length == 0)
+            if (serialPort1.IsOpen)
             {
-                string message = "No port selected";
-                string caption = "Incomplete Parameter";
-                MessageBoxButtons buttons = MessageBoxButtons.OK;
-                MessageBox.Show(message, caption, buttons);
-
-                button1.Enabled = true;
-                return;
-            }
-            if (baudRateSelect.Text.Length == 0 || !int.TryParse(baudRateSelect.Text, out baud))
-            {
-                string message = "Invalid baud rate selected";
-                string caption = "Incomplete Parameter";
-                MessageBoxButtons buttons = MessageBoxButtons.OK;
-                MessageBox.Show(message, caption, buttons);
-
-                button1.Enabled = true;
-                return;
-            }
-
-            if (connected)
-            {
+                serialPort1.Write("S");
+                startStopButton.Text = "Start";
                 if (serialPort1.IsOpen) serialPort1.Close();
-                serialSendButton.Enabled = false;
-                textBox1.Enabled = false;
-                connected = false;
+                isRunning = false;
 
                 label2.Text = "Disconnected";
                 label2.ForeColor = Color.Red;
@@ -112,6 +92,25 @@ namespace Thrust_Stand_Interface
             }
             else
             {
+                if (portSelect.Text.Length == 0)
+                {
+                    string message = "No port selected";
+                    string caption = "Incomplete Parameter";
+                    MessageBox.Show(message, caption, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                    button1.Enabled = true;
+                    return;
+                }
+                if (!int.TryParse(baudRateSelect.Text, out baud) || baud <= 0)
+                {
+                    string message = "Invalid baud rate selected";
+                    string caption = "Incomplete Parameter";
+                    MessageBox.Show(message, caption, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                    button1.Enabled = true;
+                    return;
+                }
+
                 try
                 {
                     serialPort1.PortName = portSelect.Text;
@@ -124,8 +123,7 @@ namespace Thrust_Stand_Interface
 
                     string message = "Cannot open port " + serialPort1.PortName;
                     string caption = "Error opening port";
-                    MessageBoxButtons buttons = MessageBoxButtons.OK;
-                    MessageBox.Show(message, caption, buttons);
+                    MessageBox.Show(message, caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                     portSelect.Enabled = true;
                     baudRateSelect.Enabled = true;
@@ -133,9 +131,10 @@ namespace Thrust_Stand_Interface
 
                 if (serialPort1.IsOpen)
                 {
-                    serialSendButton.Enabled = true;
-                    textBox1.Enabled = true;
-                    connected = true;
+                    trackBar1.Value = 1000;
+                    lowerLimitNumeric.Value = 1000;
+                    upperLimitNumeric.Value = 2000;
+                    sliderValueLabel.Text = "1000";
 
                     label2.Text = "Connected";
                     label2.ForeColor = Color.Green;
@@ -151,6 +150,7 @@ namespace Thrust_Stand_Interface
 
             button1.Enabled = true;
         }
+
         private void serialPort1_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             try
@@ -165,7 +165,7 @@ namespace Thrust_Stand_Interface
                     SetText(incoming);
                 }
             }
-            catch (Exception ex)
+            catch //(Exception ex)
             {
                 //MessageBox.Show(Convert.ToString(ex));
                 if (serialPort1.IsOpen) serialPort1.Close();
@@ -181,12 +181,6 @@ namespace Thrust_Stand_Interface
 
         private void clearButton_Click(object sender, EventArgs e)
         {
-            if (serialPort1.IsOpen)
-            {
-                serialPort1.Write("C");
-                serialPort1.DiscardInBuffer();
-            }
-            time = 0;
             for (int i = 0; i < 6; i++)
             {
                 datas[i] = 0;
@@ -232,6 +226,63 @@ namespace Thrust_Stand_Interface
             {
                 sw.WriteLine(richTextBox1.Text);
             }
+        }
+
+        private void trackBar1_Scroll(object sender, EventArgs e)
+        {
+            value = trackBar1.Value;
+            sliderValueLabel.Text = Convert.ToString(value);
+            if (serialPort1.IsOpen)
+            {
+                string outWrite = "P" + value;
+                serialPort1.Write(outWrite);
+            }
+        }
+
+        private void calibrateButton_Click(object sender, EventArgs e)
+        {
+            if (serialPort1.IsOpen)
+            {
+                serialPort1.Write("C");
+                //serialPort1.DiscardInBuffer();
+            }
+        }
+
+        private void lowerLimitNumeric_ValueChanged(object sender, EventArgs e)
+        {
+            trackBar1.Minimum = Convert.ToInt32(lowerLimitNumeric.Value);
+            if (trackBar1.Value < Convert.ToInt32(lowerLimitNumeric.Value)) trackBar1.Value = Convert.ToInt32(lowerLimitNumeric.Value);
+        }
+
+        private void upperLimitNumeric_ValueChanged(object sender, EventArgs e)
+        {
+            trackBar1.Maximum = Convert.ToInt32(upperLimitNumeric.Value);
+            if (trackBar1.Value > Convert.ToInt32(upperLimitNumeric.Value)) trackBar1.Value = Convert.ToInt32(upperLimitNumeric.Value);
+        }
+
+        private void startStopButton_Click(object sender, EventArgs e)
+        {
+            if (serialPort1.IsOpen)
+            {
+                if (isRunning)
+                {
+                    serialPort1.Write("S");
+                    startStopButton.Text = "Start";
+                }
+                else
+                {
+                    serialPort1.Write("R");
+                    startStopButton.Text = "Stop";
+                }
+                isRunning = !isRunning;
+            }
+        }
+
+        private void aboutButton_Click(object sender, EventArgs e)
+        {
+            string title = "About";
+            string content = "UBC UAS Thrust Stand Interface\nCharles Surianto\nDecember 2022";
+            MessageBox.Show(content, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }
