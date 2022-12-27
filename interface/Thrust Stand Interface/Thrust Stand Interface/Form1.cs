@@ -25,44 +25,10 @@ namespace Thrust_Stand_Interface
         private int value = 1000;
         private bool isRunning = false;
 
-        delegate void SetTextCallback(string text);
-
         public Form1()
         {
             InitializeComponent();
             refreshAvailablePorts();
-        }
-
-        private void SetText(string text)
-        {
-            // InvokeRequired required compares the thread ID of the
-            // calling thread to the thread ID of the creating thread.
-            // If these threads are different, it returns true.
-            if (textBox1.InvokeRequired)
-            {
-                SetTextCallback d = new SetTextCallback(SetText);
-                Invoke(d, new object[] { text });
-            }
-            else
-            {
-                richTextBox1.AppendText(text);
-                string[] dataStrings = incoming.Split(delimiters);
-                try
-                {
-                    time = Convert.ToUInt64(dataStrings[0]);
-                }
-                catch { }
-
-                for (int i = 0; i < 6; i++)
-                {
-                    try
-                    {
-                        datas[i] = Convert.ToDouble(dataStrings[i + 1]);
-                    }
-                    catch { continue; }
-                }
-                updateChart();
-            }
         }
 
         void refreshAvailablePorts()
@@ -79,8 +45,9 @@ namespace Thrust_Stand_Interface
             if (serialPort1.IsOpen)
             {
                 serialPort1.Write("S");
+                serialPort1.Write("P1000");
                 startStopButton.Text = "Start";
-                if (serialPort1.IsOpen) serialPort1.Close();
+                serialPort1.Close();
                 isRunning = false;
 
                 label2.Text = "Disconnected";
@@ -132,9 +99,10 @@ namespace Thrust_Stand_Interface
                 if (serialPort1.IsOpen)
                 {
                     trackBar1.Value = 1000;
-                    lowerLimitNumeric.Value = 1000;
-                    upperLimitNumeric.Value = 2000;
+                    //lowerLimitNumeric.Value = 1000;
+                    //upperLimitNumeric.Value = 2000;
                     sliderValueLabel.Text = "1000";
+                    serialPort1.Write("P1000");
 
                     label2.Text = "Connected";
                     label2.ForeColor = Color.Green;
@@ -161,14 +129,37 @@ namespace Thrust_Stand_Interface
 
                 if (incoming != null)
                 {
-                    //richTextBox1.AppendText(incoming);
-                    SetText(incoming);
+                    Invoke(new EventHandler(updateData));
                 }
             }
-            catch //(Exception ex)
+            catch (Exception ex)
             {
-                //MessageBox.Show(Convert.ToString(ex));
+                MessageBox.Show(Convert.ToString(ex));
                 if (serialPort1.IsOpen) serialPort1.Close();
+            }
+        }
+
+        private void updateData(object sender, EventArgs e)
+        {
+            richTextBox1.AppendText(incoming);
+            string[] dataStrings = incoming.Split(delimiters);
+            try
+            {
+                time = Convert.ToUInt64(dataStrings[0]);
+            }
+            catch { }
+
+            for (int i = 0; i < 6; i++)
+            {
+                try
+                {
+                    datas[i] = Convert.ToDouble(dataStrings[i + 1]);
+                }
+                catch { continue; }
+            }
+            for (int i = 0; i < 6; i++)
+            {
+                chart1.Series[i].Points.AddXY(time, datas[i]);
             }
         }
 
@@ -192,14 +183,6 @@ namespace Thrust_Stand_Interface
         private void comboBox1_MouseDown(object sender, MouseEventArgs e)
         {
             refreshAvailablePorts();
-        }
-
-        private void updateChart()
-        {
-            for (int i = 0; i < 6; i++)
-            {
-                chart1.Series[i].Points.AddXY(time, datas[i]);
-            }
         }
 
         private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
@@ -228,7 +211,7 @@ namespace Thrust_Stand_Interface
             }
         }
 
-        private void trackBar1_Scroll(object sender, EventArgs e)
+        private void trackBar1_ValueChanged(object sender, EventArgs e)
         {
             value = trackBar1.Value;
             sliderValueLabel.Text = Convert.ToString(value);
