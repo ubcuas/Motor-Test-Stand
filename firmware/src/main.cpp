@@ -4,8 +4,12 @@
  */
 
 #include <Arduino.h>
+#include <Servo.h>
+
+// #define DEBUGGING // uncomment to enable debugging
 
 // constants
+const int PWM_PIN = 11;                             //
 const int NUM_CELLS = 6;                            //
 const int ZERO_PIN = 12;                            // zero button pin, internally pulled up (active low)
 const int CLOCK_PIN = 2;                            // common clock pin for all cells
@@ -23,10 +27,12 @@ const double SCALE_NEWTON[NUM_CELLS] = {
 // global variables
 unsigned long Time;            // holds current time in (ms)
 unsigned long StartTime = 0;   // holds zero time
-char LineBuffer[300];          //
+char SerialOutBuffer[300];     //
 char ValueBuffer[20];          //
+char SerialInBuffer[10];       //
 long Readings[NUM_CELLS];      //
 long Offsets[NUM_CELLS] = {0}; //
+bool Run = 0;                  //
 
 // prototypes
 void zeroAll();
@@ -34,16 +40,24 @@ void read(long *);
 void calibrate(int = 20);
 bool areReady();
 
+Servo MotorControl;
+
 void setup()
 {
-    Serial.begin(38400);
+    Serial.begin(115200);
     // Serial.println("Starting up...");
+
+    MotorControl.attach(11, 500, 2500);
+    MotorControl.writeMicroseconds(1000);
 
     pinMode(CLOCK_PIN, OUTPUT);
     digitalWrite(CLOCK_PIN, 0);
+
     pinMode(ZERO_PIN, INPUT_PULLUP);
+
     for (int i = 0; i < NUM_CELLS; i++)
         pinMode(DOUT_PIN[i], INPUT);
+
     zeroAll();
 
     // Serial.println("All set.");
@@ -53,22 +67,61 @@ void setup()
 
 void loop()
 {
-    Time = millis();
-    if (areReady())
+    if (Run)
     {
-        read(Readings);
-        sprintf(LineBuffer, "%10ld", Time - StartTime);
-        for (int i = 0; i < NUM_CELLS; i++)
+        Time = millis();
+        if (areReady())
         {
-            dtostrf((double)(Readings[i] - Offsets[i]) * SCALE_NEWTON[i], 10, 2, ValueBuffer);
-            strcat(LineBuffer, ", ");
-            strcat(LineBuffer, ValueBuffer);
+            read(Readings);
+            sprintf(SerialOutBuffer, "%ld", Time - StartTime);
+            for (int i = 0; i < NUM_CELLS; i++)
+            {
+                dtostrf((double)(Readings[i] - Offsets[i]) * SCALE_NEWTON[i], 0, 2, ValueBuffer);
+                strcat(SerialOutBuffer, ",");
+                strcat(SerialOutBuffer, ValueBuffer);
+            }
+            Serial.println(SerialOutBuffer);
         }
-        Serial.println(LineBuffer);
+    }
+    else
+    {
+        delay(1);
     }
 
-    if (digitalRead(ZERO_PIN) == 0)
-        zeroAll();
+    if (Serial.available())
+    {
+        SerialInBuffer[0] = 0;
+
+        int i;
+        for (i = 0; Serial.available(); i++)
+            SerialInBuffer[i] = Serial.read();
+        SerialInBuffer[i] = 0;
+
+        char command = SerialInBuffer[0];
+        switch (command)
+        {
+        case 'C':
+            zeroAll();
+            break;
+        case 'R':
+            Run = 1;
+            break;
+        case 'S':
+            Run = 0;
+            break;
+        case 'P':
+            int value;
+            sscanf(SerialInBuffer + 1, "%d", &value);
+            if (value >= 500 && value <= 2500)
+                MotorControl.writeMicroseconds(value);
+#ifdef DEBUGGING
+            Serial.println(value);
+#endif
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 void zeroAll()
@@ -76,7 +129,7 @@ void zeroAll()
     // Serial.println("Zeroing all...");
     calibrate();
     // Serial.println("Done.");
-    Serial.println("\n Time (ms), Cell 1 (N), Cell 2 (N), Cell 3 (N), Cell 4 (N), Cell 5 (N), Cell 6 (N)");
+    // Serial.println("\n Time (ms), Cell 1 (N), Cell 2 (N), Cell 3 (N), Cell 4 (N), Cell 5 (N), Cell 6 (N)");
     StartTime = millis();
 }
 
