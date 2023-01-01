@@ -10,8 +10,9 @@
 
 // constants
 const int PWM_PIN = 11;                             //
+const int PWM_MIN = 500;                            // min width (us)
+const int PWM_MAX = 2000;                           // max width (us)
 const int NUM_CELLS = 6;                            //
-const int ZERO_PIN = 12;                            // zero button pin, internally pulled up (active low)
 const int CLOCK_PIN = 2;                            // common clock pin for all cells
 const int DOUT_PIN[NUM_CELLS] = {3, 4, 5, 6, 7, 8}; // DOUT pins of each cell
 const double SCALE_NEWTON[NUM_CELLS] = {
@@ -37,7 +38,7 @@ bool Run = 0;                  //
 // prototypes
 void zeroAll();
 void read(long *);
-void calibrate(int = 20);
+void calibrate(int = 100);
 bool areReady();
 
 Servo MotorControl;
@@ -45,24 +46,17 @@ Servo MotorControl;
 void setup()
 {
     Serial.begin(115200);
-    // Serial.println("Starting up...");
 
-    MotorControl.attach(11, 500, 2500);
+    MotorControl.attach(PWM_PIN, PWM_MIN, PWM_MAX);
     MotorControl.writeMicroseconds(1000);
 
     pinMode(CLOCK_PIN, OUTPUT);
     digitalWrite(CLOCK_PIN, 0);
 
-    pinMode(ZERO_PIN, INPUT_PULLUP);
-
     for (int i = 0; i < NUM_CELLS; i++)
         pinMode(DOUT_PIN[i], INPUT);
 
     zeroAll();
-
-    // Serial.println("All set.");
-    // Serial.println(" Time (ms), Cell 1 (N), Cell 2 (N), Cell 3 (N), Cell 4 (N), Cell 5 (N), Cell 6 (N)");
-    // StartTime = millis();
 }
 
 void loop()
@@ -90,8 +84,6 @@ void loop()
 
     if (Serial.available())
     {
-        SerialInBuffer[0] = 0;
-
         int i;
         for (i = 0; Serial.available(); i++)
             SerialInBuffer[i] = Serial.read();
@@ -112,7 +104,7 @@ void loop()
         case 'P':
             int value;
             sscanf(SerialInBuffer + 1, "%d", &value);
-            if (value >= 500 && value <= 2500)
+            if (value >= PWM_MIN && value <= PWM_MAX)
                 MotorControl.writeMicroseconds(value);
 #ifdef DEBUGGING
             Serial.println(value);
@@ -126,10 +118,7 @@ void loop()
 
 void zeroAll()
 {
-    // Serial.println("Zeroing all...");
     calibrate();
-    // Serial.println("Done.");
-    // Serial.println("\n Time (ms), Cell 1 (N), Cell 2 (N), Cell 3 (N), Cell 4 (N), Cell 5 (N), Cell 6 (N)");
     StartTime = millis();
 }
 
