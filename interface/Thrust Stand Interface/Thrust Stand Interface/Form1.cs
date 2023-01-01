@@ -22,8 +22,8 @@ namespace Thrust_Stand_Interface
         private char[] delimiters = { ',', ' ', '\t' };
         private string incoming;
         private int baud;
-        private int value = 1000;
         private bool isRunning = false;
+        private int LastSliderValue;
 
         public Form1()
         {
@@ -48,6 +48,7 @@ namespace Thrust_Stand_Interface
                 serialPort1.Write("P1000");
                 startStopButton.Text = "Start";
                 serialPort1.Close();
+                timer1.Enabled = false;
                 isRunning = false;
 
                 label2.Text = "Disconnected";
@@ -86,7 +87,7 @@ namespace Thrust_Stand_Interface
                 }
                 catch
                 {
-                    serialPort1.Close();
+                    if (serialPort1.IsOpen) serialPort1.Close();
 
                     string message = "Cannot open port " + serialPort1.PortName;
                     string caption = "Error opening port";
@@ -99,10 +100,9 @@ namespace Thrust_Stand_Interface
                 if (serialPort1.IsOpen)
                 {
                     trackBar1.Value = 1000;
-                    //lowerLimitNumeric.Value = 1000;
-                    //upperLimitNumeric.Value = 2000;
                     sliderValueLabel.Text = "1000";
                     serialPort1.Write("P1000");
+                    timer1.Enabled = true;
 
                     label2.Text = "Connected";
                     label2.ForeColor = Color.Green;
@@ -213,13 +213,7 @@ namespace Thrust_Stand_Interface
 
         private void trackBar1_ValueChanged(object sender, EventArgs e)
         {
-            value = trackBar1.Value;
-            sliderValueLabel.Text = Convert.ToString(value);
-            if (serialPort1.IsOpen)
-            {
-                string outWrite = "P" + value;
-                serialPort1.Write(outWrite);
-            }
+            sliderValueLabel.Text = Convert.ToString(trackBar1.Value);
         }
 
         private void calibrateButton_Click(object sender, EventArgs e)
@@ -266,6 +260,16 @@ namespace Thrust_Stand_Interface
             string title = "About";
             string content = "UBC UAS Thrust Stand Interface\nCharles Surianto\nDecember 2022";
             MessageBox.Show(content, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            int sliderValue = trackBar1.Value;
+            if (sliderValue != LastSliderValue)
+            {
+                if (serialPort1.IsOpen) serialPort1.Write("P" + sliderValue.ToString());
+            }
+            LastSliderValue = sliderValue;
         }
     }
 }
