@@ -17,7 +17,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdint.h"
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,11 +52,31 @@ DMA_HandleTypeDef hdma_usart3_tx;
 PCD_HandleTypeDef hpcd_USB_FS;
 
 /* USER CODE BEGIN PV */
+GPIO_TypeDef *HX711DataPorts[NUM_OF_CELLS] = {
+    CELL1_GPIO_Port,
+    CELL2_GPIO_Port,
+    CELL3_GPIO_Port,
+    CELL4_GPIO_Port,
+    CELL5_GPIO_Port,
+    CELL6_GPIO_Port};
+uint16_t HX711DataPins[NUM_OF_CELLS] = {
+    CELL1_Pin,
+    CELL2_Pin,
+    CELL3_Pin,
+    CELL4_Pin,
+    CELL5_Pin,
+    CELL6_Pin};
 int32_t RawCellReadings[NUM_OF_CELLS];
 uint8_t PulseCounter = 0;
+uint16_t ClockPulses[25];
 
 uint16_t RawADCReadings[2];
+uint32_t Voltage, Current; // * 1E-3
 
+uint8_t UARTARxCounter = 0;
+uint8_t UARTARxByte;
+uint8_t UARTARxBuffer[20];
+uint8_t UARTATxBuffer[200];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -207,7 +228,11 @@ static void MX_ADC2_Init(void)
     hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
     hadc2.Init.DMAContinuousRequests = DISABLE;
     hadc2.Init.Overrun = ADC_OVR_DATA_PRESERVED;
-    hadc2.Init.OversamplingMode = DISABLE;
+    hadc2.Init.OversamplingMode = ENABLE;
+    hadc2.Init.Oversampling.Ratio = ADC_OVERSAMPLING_RATIO_8;
+    hadc2.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_3;
+    hadc2.Init.Oversampling.TriggeredMode = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;
+    hadc2.Init.Oversampling.OversamplingStopReset = ADC_REGOVERSAMPLING_CONTINUED_MODE;
     if (HAL_ADC_Init(&hadc2) != HAL_OK)
     {
         Error_Handler();
@@ -282,7 +307,7 @@ static void MX_TIM3_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN TIM3_Init 2 */
-
+    HAL_TIM_Base_Start_IT(&htim3);
     /* USER CODE END TIM3_Init 2 */
     HAL_TIM_MspPostInit(&htim3);
 }
@@ -344,7 +369,7 @@ static void MX_TIM17_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN TIM17_Init 2 */
-
+    HAL_TIM_PWM_Start_IT(&htim17, TIM_CHANNEL_1);
     /* USER CODE END TIM17_Init 2 */
     HAL_TIM_MspPostInit(&htim17);
 }
@@ -517,9 +542,9 @@ static void MX_GPIO_Init(void)
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
 
-    /*Configure GPIO pins : AMP1_Pin AMP2_Pin AMP3_Pin AMP4_Pin
-                             AMP5_Pin AMP6_Pin */
-    GPIO_InitStruct.Pin = AMP1_Pin | AMP2_Pin | AMP3_Pin | AMP4_Pin | AMP5_Pin | AMP6_Pin;
+    /*Configure GPIO pins : CELL1_Pin CELL2_Pin CELL3_Pin CELL4_Pin
+                             CELL5_Pin CELL6_Pin */
+    GPIO_InitStruct.Pin = CELL1_Pin | CELL2_Pin | CELL3_Pin | CELL4_Pin | CELL5_Pin | CELL6_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -531,10 +556,80 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+    // cell amp clock
+    if (htim == &htim3)
+    {
+        // read all the bits
+        if (PulseCounter < 24)
+        {
+            for (int i = 0; i < NUM_OF_CELLS; i++)
+            {
+                RawCellReadings[i] <<= 1;
+                if (HAL_GPIO_ReadPin(HX711DataPorts[i], HX711DataPins[i]))
+                {
+                    RawCellReadings[i] |= 1;
+                }
+            }
+            PulseCounter++;
+        }
+    }
+
+    // periodic interrupt (PWM 50Hz)
+    if (htim == &htim17)
+    {
+        // start next cycle read
+        if (HAL_GPIO_ReadPin(GPIOB, CELL1_Pin | CELL2_Pin | CELL3_Pin | CELL4_Pin | CELL5_Pin | CELL6_Pin) == 0)
+        {
+            // read channel A with 128 gain (HX717 datasheet)
+            HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t *)ClockPulses, 25);
+        }
+
+        // start adc reading
+        HAL_ADC_Start_DMA(&hadc2, (uint32_t *)RawADCReadings, 2);
+
+        // extend RawCellReadings sign bits
+        for (int i = 0; i < NUM_OF_CELLS; i++)
+        {
+            if ((RawCellReadings[i] & (1 << 23)) != 0)
+            {
+                RawCellReadings[i] |= 0xff000000;
+            }
+            else
+            {
+                RawCellReadings[i] &= 0x00ffffff;
+            }
+        }
+
+        UARTATxBuffer[0] = 0;
+        // char strBuffer[20];
+
+        // for (int i = 0; i < NUM_OF_CELLS; i++)
+        // {
+        // }
+
+        // sprintf(UARTATxBuffer, "%ld %ld %ld %ld %ld %ld\n", RawCellReadings[0], RawCellReadings[1], RawCellReadings[2]);
+        // CDC_Transmit_FS((uint8_t *)StrBuffer, strlen(StrBuffer));
+    }
 }
 
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 {
+    if (htim == &htim3)
+    {
+        // reset counter
+        PulseCounter = 0;
+
+        // stop clock pulses
+        HAL_TIM_PWM_Stop_DMA(htim, TIM_CHANNEL_1);
+    }
+}
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+    if (hadc == &hadc2)
+    {
+        // convert raw to volts and amps
+    }
 }
 /* USER CODE END 4 */
 
