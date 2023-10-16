@@ -17,6 +17,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stdio.h"
 #include "stdint.h"
 #include "string.h"
 /* USER CODE END Includes */
@@ -46,20 +47,16 @@ DMA_HandleTypeDef hdma_tim3_ch1;
 
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
-DMA_HandleTypeDef hdma_usart3_rx;
-DMA_HandleTypeDef hdma_usart3_tx;
-
-PCD_HandleTypeDef hpcd_USB_FS;
 
 /* USER CODE BEGIN PV */
-GPIO_TypeDef *HX711DataPorts[NUM_OF_CELLS] = {
+GPIO_TypeDef *HX717DataPorts[NUM_OF_CELLS] = {
     CELL1_GPIO_Port,
     CELL2_GPIO_Port,
     CELL3_GPIO_Port,
     CELL4_GPIO_Port,
     CELL5_GPIO_Port,
     CELL6_GPIO_Port};
-uint16_t HX711DataPins[NUM_OF_CELLS] = {
+uint16_t HX717DataPins[NUM_OF_CELLS] = {
     CELL1_Pin,
     CELL2_Pin,
     CELL3_Pin,
@@ -71,12 +68,14 @@ uint8_t PulseCounter = 0;
 uint16_t ClockPulses[25];
 
 uint16_t RawADCReadings[2];
-uint32_t Voltage, Current; // * 1E-3
+int32_t Voltage, Current; // mV and mA
 
 uint8_t UARTARxCounter = 0;
 uint8_t UARTARxByte;
 uint8_t UARTARxBuffer[20];
 uint8_t UARTATxBuffer[200];
+
+uint16_t ESCPulse = 1000;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -85,7 +84,6 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
-static void MX_USB_PCD_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_TIM17_Init(void);
@@ -105,7 +103,10 @@ static void MX_TIM17_Init(void);
 int main(void)
 {
     /* USER CODE BEGIN 1 */
-
+    for (int i = 0; i < 25; i++)
+    {
+        ClockPulses[i] = 1;
+    }
     /* USER CODE END 1 */
 
     /* MCU Configuration--------------------------------------------------------*/
@@ -129,12 +130,11 @@ int main(void)
     MX_DMA_Init();
     MX_USART2_UART_Init();
     MX_USART3_UART_Init();
-    MX_USB_PCD_Init();
     MX_TIM3_Init();
     MX_ADC2_Init();
     MX_TIM17_Init();
     /* USER CODE BEGIN 2 */
-
+    HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1); // start listening
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -164,9 +164,8 @@ void SystemClock_Config(void)
     /** Initializes the RCC Oscillators according to the specified parameters
      * in the RCC_OscInitTypeDef structure.
      */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48 | RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-    RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
     RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV5;
@@ -469,38 +468,6 @@ static void MX_USART3_UART_Init(void)
 }
 
 /**
- * @brief USB Initialization Function
- * @param None
- * @retval None
- */
-static void MX_USB_PCD_Init(void)
-{
-
-    /* USER CODE BEGIN USB_Init 0 */
-
-    /* USER CODE END USB_Init 0 */
-
-    /* USER CODE BEGIN USB_Init 1 */
-
-    /* USER CODE END USB_Init 1 */
-    hpcd_USB_FS.Instance = USB;
-    hpcd_USB_FS.Init.dev_endpoints = 8;
-    hpcd_USB_FS.Init.speed = PCD_SPEED_FULL;
-    hpcd_USB_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
-    hpcd_USB_FS.Init.Sof_enable = DISABLE;
-    hpcd_USB_FS.Init.low_power_enable = DISABLE;
-    hpcd_USB_FS.Init.lpm_enable = DISABLE;
-    hpcd_USB_FS.Init.battery_charging_enable = DISABLE;
-    if (HAL_PCD_Init(&hpcd_USB_FS) != HAL_OK)
-    {
-        Error_Handler();
-    }
-    /* USER CODE BEGIN USB_Init 2 */
-
-    /* USER CODE END USB_Init 2 */
-}
-
-/**
  * Enable DMA controller clock
  */
 static void MX_DMA_Init(void)
@@ -517,12 +484,6 @@ static void MX_DMA_Init(void)
     /* DMA1_Channel2_IRQn interrupt configuration */
     HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
-    /* DMA1_Channel3_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
-    /* DMA1_Channel4_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Channel4_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Channel4_IRQn);
 }
 
 /**
@@ -565,7 +526,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             for (int i = 0; i < NUM_OF_CELLS; i++)
             {
                 RawCellReadings[i] <<= 1;
-                if (HAL_GPIO_ReadPin(HX711DataPorts[i], HX711DataPins[i]))
+                if (HAL_GPIO_ReadPin(HX717DataPorts[i], HX717DataPins[i]))
                 {
                     RawCellReadings[i] |= 1;
                 }
@@ -600,15 +561,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             }
         }
 
-        UARTATxBuffer[0] = 0;
-        // char strBuffer[20];
+        sprintf((char *)UARTATxBuffer, "%u %ld %ld", ESCPulse, Voltage, Current);
 
-        // for (int i = 0; i < NUM_OF_CELLS; i++)
-        // {
-        // }
+        char strBuffer[20];
 
-        // sprintf(UARTATxBuffer, "%ld %ld %ld %ld %ld %ld\n", RawCellReadings[0], RawCellReadings[1], RawCellReadings[2]);
-        // CDC_Transmit_FS((uint8_t *)StrBuffer, strlen(StrBuffer));
+        for (int i = 0; i < NUM_OF_CELLS; i++)
+        {
+            sprintf((char *)strBuffer, " %ld", RawCellReadings[i]);
+            strcat((char *)UARTATxBuffer, (const char *)strBuffer);
+        }
+
+        HAL_UART_Transmit_IT(&HUARTA, UARTATxBuffer, strlen((const char *)UARTATxBuffer));
     }
 }
 
@@ -629,6 +592,47 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     if (hadc == &hadc2)
     {
         // convert raw to volts and amps
+        Voltage = RawADCReadings[0] / ADC_PER_VOLT;
+        Current = RawADCReadings[1] / ADC_PER_AMP - AMP_OFFSET;
+    }
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart == &HUARTA)
+    {
+        if (UARTARxByte == '\n' || UARTARxByte == '\r')
+        {
+            UARTARxBuffer[UARTARxCounter] = 0; // put line ending
+            UARTARxCounter = 0;                // reset counter
+
+            // save and set esc pulse
+            sscanf((const char *)UARTARxBuffer, "%d", (int *)&ESCPulse);
+            __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
+        }
+        else
+        {
+            // fill the buffer
+            UARTARxBuffer[UARTARxCounter++] = UARTARxByte;
+        }
+        HAL_UART_Receive_IT(huart, &UARTARxByte, 1);
+    }
+
+    if (huart == &HUARTB)
+    {
+    }
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart == &HUARTA)
+    {
+        // clear buffer
+        // UARTATxBuffer[0] = 0;
+    }
+
+    if (huart == &HUARTB)
+    {
     }
 }
 /* USER CODE END 4 */
