@@ -88,9 +88,9 @@ void Error_Handler(void);
 #define NUM_OF_CELLS 6
 #define HUARTA huart3
 #define HUARTB huart2
-#define ADC_PER_VOLT 1
-#define ADC_PER_AMP 1
-#define AMP_OFFSET 0
+#define ADC_PER_VOLT 73178
+#define ADC_PER_AMP 40950
+#define AMP_OFFSET 5000
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

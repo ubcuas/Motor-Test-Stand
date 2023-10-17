@@ -68,7 +68,8 @@ uint8_t PulseCounter = 0;
 uint16_t ClockPulses[25];
 
 uint16_t RawADCReadings[2];
-int32_t Voltage, Current; // mV and mA
+int32_t Voltage; // cV
+int32_t Current; // cA
 
 uint8_t UARTARxCounter = 0;
 uint8_t UARTARxByte;
@@ -589,8 +590,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     if (hadc == &hadc2)
     {
         // convert raw to volts and amps
-        Voltage = RawADCReadings[0] / ADC_PER_VOLT;
-        Current = RawADCReadings[1] / ADC_PER_AMP - AMP_OFFSET;
+        Voltage = RawADCReadings[0] * 100000 / ADC_PER_VOLT;
+        Current = RawADCReadings[1] * 100000 / ADC_PER_AMP - AMP_OFFSET;
     }
 }
 
@@ -604,7 +605,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             UARTARxCounter = 0;                // reset counter
 
             // save and set esc pulse
-            ESCPulse = (UARTARxBuffer[0] - '0') * 1000 + (UARTARxBuffer[1] - '0' * 100) + (UARTARxBuffer[2] - '0') * 10 + (UARTARxBuffer[3] - '0');
+            ESCPulse = (UARTARxBuffer[0] - '0') * 1000  //
+                       + (UARTARxBuffer[1] - '0' * 100) //
+                       + (UARTARxBuffer[2] - '0') * 10  //
+                       + (UARTARxBuffer[3] - '0');      //
+
             if (ESCPulse >= 1000 && ESCPulse <= 2000)
             {
                 __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
@@ -615,6 +620,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             // fill the buffer
             UARTARxBuffer[UARTARxCounter++] = UARTARxByte;
         }
+
         HAL_UART_Receive_IT(huart, &UARTARxByte, 1);
     }
 
@@ -627,8 +633,6 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart == &HUARTA)
     {
-        // clear buffer
-        // UARTATxBuffer[0] = 0;
     }
 
     if (huart == &HUARTB)
