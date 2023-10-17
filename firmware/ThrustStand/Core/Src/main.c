@@ -579,11 +579,8 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim == &htim3)
     {
-        // reset counter
-        PulseCounter = 0;
-
-        // stop clock pulses
-        HAL_TIM_PWM_Stop_DMA(htim, TIM_CHANNEL_1);
+        PulseCounter = 0;                          // reset counter
+        HAL_TIM_PWM_Stop_DMA(htim, TIM_CHANNEL_1); // stop clock pulses
     }
 }
 
@@ -607,8 +604,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             UARTARxCounter = 0;                // reset counter
 
             // save and set esc pulse
-            sscanf((const char *)UARTARxBuffer, "%d", (int *)&ESCPulse);
-            __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
+            ESCPulse = (UARTARxBuffer[0] - '0') * 1000 + (UARTARxBuffer[1] - '0' * 100) + (UARTARxBuffer[2] - '0') * 10 + (UARTARxBuffer[3] - '0');
+            if (ESCPulse >= 1000 && ESCPulse <= 2000)
+            {
+                __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
+            }
         }
         else
         {
