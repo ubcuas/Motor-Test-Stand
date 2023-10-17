@@ -73,8 +73,8 @@ int32_t Current; // cA
 
 uint8_t UARTARxCounter = 0;
 uint8_t UARTARxByte;
-uint8_t UARTARxBuffer[20];
-uint8_t UARTATxBuffer[200];
+uint8_t UARTARxBuffer[UART_RX_BUFFER_SIZE];
+uint8_t UARTATxBuffer[UART_TX_BUFFER_SIZE];
 
 uint16_t ESCPulse = 1000;
 /* USER CODE END PV */
@@ -599,7 +599,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart == &HUARTA)
     {
-        if (UARTARxByte == '\n' || UARTARxByte == '\r')
+        if (UARTARxByte == '\n' || UARTARxByte == '\r' || UARTARxCounter >= UART_RX_BUFFER_SIZE)
         {
             UARTARxBuffer[UARTARxCounter] = 0; // put line ending
             UARTARxCounter = 0;                // reset counter
