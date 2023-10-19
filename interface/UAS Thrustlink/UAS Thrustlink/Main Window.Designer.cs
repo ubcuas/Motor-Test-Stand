@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Thrustlink));
             this.serialPort1 = new System.IO.Ports.SerialPort(this.components);
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
@@ -60,11 +61,10 @@
             this.richTextBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.richTextBox1.Location = new System.Drawing.Point(12, 306);
-            this.richTextBox1.Margin = new System.Windows.Forms.Padding(2);
+            this.richTextBox1.Location = new System.Drawing.Point(18, 471);
             this.richTextBox1.Name = "richTextBox1";
             this.richTextBox1.ReadOnly = true;
-            this.richTextBox1.Size = new System.Drawing.Size(780, 244);
+            this.richTextBox1.Size = new System.Drawing.Size(1168, 373);
             this.richTextBox1.TabIndex = 0;
             this.richTextBox1.Text = "";
             this.richTextBox1.TextChanged += new System.EventHandler(this.richTextBox1_TextChanged);
@@ -72,16 +72,18 @@
             // portComboBox
             // 
             this.portComboBox.FormattingEnabled = true;
-            this.portComboBox.Location = new System.Drawing.Point(15, 19);
+            this.portComboBox.Location = new System.Drawing.Point(22, 29);
+            this.portComboBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.portComboBox.Name = "portComboBox";
-            this.portComboBox.Size = new System.Drawing.Size(66, 21);
+            this.portComboBox.Size = new System.Drawing.Size(97, 28);
             this.portComboBox.TabIndex = 1;
             // 
             // portRefreshButton
             // 
-            this.portRefreshButton.Location = new System.Drawing.Point(87, 19);
+            this.portRefreshButton.Location = new System.Drawing.Point(130, 29);
+            this.portRefreshButton.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.portRefreshButton.Name = "portRefreshButton";
-            this.portRefreshButton.Size = new System.Drawing.Size(75, 23);
+            this.portRefreshButton.Size = new System.Drawing.Size(112, 35);
             this.portRefreshButton.TabIndex = 3;
             this.portRefreshButton.Text = "Refresh";
             this.portRefreshButton.UseVisualStyleBackColor = true;
@@ -89,9 +91,10 @@
             // 
             // connectionButton
             // 
-            this.connectionButton.Location = new System.Drawing.Point(168, 19);
+            this.connectionButton.Location = new System.Drawing.Point(252, 29);
+            this.connectionButton.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.connectionButton.Name = "connectionButton";
-            this.connectionButton.Size = new System.Drawing.Size(75, 23);
+            this.connectionButton.Size = new System.Drawing.Size(112, 35);
             this.connectionButton.TabIndex = 4;
             this.connectionButton.Text = "Connect";
             this.connectionButton.UseVisualStyleBackColor = true;
@@ -104,9 +107,10 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.statusLabel.AutoSize = true;
             this.statusLabel.ForeColor = System.Drawing.Color.Red;
-            this.statusLabel.Location = new System.Drawing.Point(249, 24);
+            this.statusLabel.Location = new System.Drawing.Point(374, 37);
+            this.statusLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.statusLabel.Name = "statusLabel";
-            this.statusLabel.Size = new System.Drawing.Size(73, 13);
+            this.statusLabel.Size = new System.Drawing.Size(107, 20);
             this.statusLabel.TabIndex = 5;
             this.statusLabel.Text = "Disconnected";
             this.statusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -117,18 +121,20 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox1.Enabled = false;
-            this.textBox1.Location = new System.Drawing.Point(12, 280);
+            this.textBox1.Location = new System.Drawing.Point(18, 431);
+            this.textBox1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(860, 20);
+            this.textBox1.Size = new System.Drawing.Size(1288, 26);
             this.textBox1.TabIndex = 6;
             this.textBox1.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox1_KeyPress);
             // 
             // infoButton
             // 
             this.infoButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.infoButton.Location = new System.Drawing.Point(797, 527);
+            this.infoButton.Location = new System.Drawing.Point(1196, 811);
+            this.infoButton.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.infoButton.Name = "infoButton";
-            this.infoButton.Size = new System.Drawing.Size(75, 23);
+            this.infoButton.Size = new System.Drawing.Size(112, 35);
             this.infoButton.TabIndex = 7;
             this.infoButton.Text = "Info";
             this.infoButton.UseVisualStyleBackColor = true;
@@ -141,9 +147,11 @@
             this.serialConnectionGroupBox.Controls.Add(this.connectionButton);
             this.serialConnectionGroupBox.Controls.Add(this.statusLabel);
             this.serialConnectionGroupBox.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.serialConnectionGroupBox.Location = new System.Drawing.Point(12, 12);
+            this.serialConnectionGroupBox.Location = new System.Drawing.Point(18, 18);
+            this.serialConnectionGroupBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.serialConnectionGroupBox.Name = "serialConnectionGroupBox";
-            this.serialConnectionGroupBox.Size = new System.Drawing.Size(335, 56);
+            this.serialConnectionGroupBox.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.serialConnectionGroupBox.Size = new System.Drawing.Size(502, 86);
             this.serialConnectionGroupBox.TabIndex = 8;
             this.serialConnectionGroupBox.TabStop = false;
             this.serialConnectionGroupBox.Text = "Serial Connection";
@@ -153,9 +161,11 @@
             this.dashboardGroupBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dashboardGroupBox.Enabled = false;
-            this.dashboardGroupBox.Location = new System.Drawing.Point(12, 74);
+            this.dashboardGroupBox.Location = new System.Drawing.Point(18, 114);
+            this.dashboardGroupBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.dashboardGroupBox.Name = "dashboardGroupBox";
-            this.dashboardGroupBox.Size = new System.Drawing.Size(860, 200);
+            this.dashboardGroupBox.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.dashboardGroupBox.Size = new System.Drawing.Size(1290, 308);
             this.dashboardGroupBox.TabIndex = 9;
             this.dashboardGroupBox.TabStop = false;
             this.dashboardGroupBox.Text = "Dashboard";
@@ -163,9 +173,10 @@
             // clearButton
             // 
             this.clearButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.clearButton.Location = new System.Drawing.Point(797, 306);
+            this.clearButton.Location = new System.Drawing.Point(1196, 471);
+            this.clearButton.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.clearButton.Name = "clearButton";
-            this.clearButton.Size = new System.Drawing.Size(75, 23);
+            this.clearButton.Size = new System.Drawing.Size(112, 35);
             this.clearButton.TabIndex = 10;
             this.clearButton.Text = "Clear";
             this.clearButton.UseVisualStyleBackColor = true;
@@ -174,18 +185,19 @@
             // saveButton
             // 
             this.saveButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.saveButton.Location = new System.Drawing.Point(797, 335);
+            this.saveButton.Location = new System.Drawing.Point(1196, 515);
+            this.saveButton.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.saveButton.Name = "saveButton";
-            this.saveButton.Size = new System.Drawing.Size(75, 23);
+            this.saveButton.Size = new System.Drawing.Size(112, 35);
             this.saveButton.TabIndex = 11;
             this.saveButton.Text = "Save";
             this.saveButton.UseVisualStyleBackColor = true;
             // 
             // Thrustlink
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(884, 561);
+            this.ClientSize = new System.Drawing.Size(1326, 863);
             this.Controls.Add(this.saveButton);
             this.Controls.Add(this.clearButton);
             this.Controls.Add(this.dashboardGroupBox);
@@ -194,8 +206,8 @@
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.richTextBox1);
             this.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.Margin = new System.Windows.Forms.Padding(2);
-            this.MinimumSize = new System.Drawing.Size(900, 600);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MinimumSize = new System.Drawing.Size(1339, 893);
             this.Name = "Thrustlink";
             this.Text = "UAS Thrustlink";
             this.serialConnectionGroupBox.ResumeLayout(false);
