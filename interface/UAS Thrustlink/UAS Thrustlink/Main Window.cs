@@ -64,7 +64,7 @@ namespace UAS_Thrustlink
             portComboBox.Items.Clear();
             portComboBox.Items.AddRange(availablePorts);
 
-            if (portComboBox.Text == "")
+            if (portComboBox.Text == "" && portComboBox.Items.Count > 0)
             {
                 try
                 {
@@ -151,7 +151,7 @@ namespace UAS_Thrustlink
             var confirmResult = MessageBox.Show(
                 "Clear the terminal?",
                 "",
-                MessageBoxButtons.YesNo, 
+                MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2);
             if (confirmResult == DialogResult.Yes)
@@ -164,7 +164,8 @@ namespace UAS_Thrustlink
         {
             MessageBox.Show(
                 "UAS Thrustlink\n\nCharles Surianto\nOctober 2023",
-                "",MessageBoxButtons.OK, 
+                "",
+                MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
         }
     }
