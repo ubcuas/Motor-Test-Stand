@@ -26,7 +26,7 @@ namespace UAS_Thrustlink
                 portComboBox.Enabled = false;
                 statusLabel.Text = "Connected";
                 statusLabel.ForeColor = Color.Green;
-                textBox1.Enabled = true;
+                serialTextBox.Enabled = true;
                 dashboardGroupBox.Enabled = true;
             }
             else
@@ -35,7 +35,7 @@ namespace UAS_Thrustlink
                 portComboBox.Enabled = true;
                 statusLabel.Text = "Disconnected";
                 statusLabel.ForeColor = Color.Red;
-                textBox1.Enabled = false;
+                serialTextBox.Enabled = false;
                 dashboardGroupBox.Enabled = false;
             }
         }
@@ -46,7 +46,7 @@ namespace UAS_Thrustlink
             // also check if the serial port is disconnected or no
             try
             {
-                serialPort1.Write("");
+                serialPort1.Write(pulseNumericBox.Value.ToString() + "\n");
             }
             catch (Exception ex)
             {
@@ -98,6 +98,8 @@ namespace UAS_Thrustlink
                     // establish the connection
                     serialPort1.PortName = portComboBox.Text;
                     serialPort1.Open();
+                    richTextBox1.Clear();
+                    pulseNumericBox.Value = 1000;
                 }
                 catch (Exception ex)
                 {
@@ -116,13 +118,13 @@ namespace UAS_Thrustlink
             richTextBox1.ScrollToCaret();
         }
 
-        private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
+        private void serialTextBox_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (e.KeyChar == '\r') // pressed enter
             {
                 try
                 {
-                    serialPort1.Write(textBox1.Text + "\n");
+                    serialPort1.Write(serialTextBox.Text + "\n");
                 }
                 catch (Exception ex)
                 {
@@ -130,7 +132,7 @@ namespace UAS_Thrustlink
                     serialPort1.Close();
                     updateVisuals();
                 }
-                textBox1.Clear();
+                serialTextBox.Clear();
             }
         }
 
@@ -167,6 +169,16 @@ namespace UAS_Thrustlink
                 "",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
+        }
+
+        private void pulseNumericBox_ValueChanged(object sender, EventArgs e)
+        {
+            pulseTrackBar.Value = (int)pulseNumericBox.Value;
+        }
+
+        private void pulseTrackBar_ValueChanged(object sender, EventArgs e)
+        {
+            pulseNumericBox.Value = pulseTrackBar.Value;
         }
     }
 }
