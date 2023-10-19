@@ -27,6 +27,7 @@ namespace UAS_Thrustlink
                 statusLabel.Text = "Connected";
                 statusLabel.ForeColor = Color.Green;
                 textBox1.Enabled = true;
+                dashboardGroupBox.Enabled = true;
             }
             else
             {
@@ -35,6 +36,7 @@ namespace UAS_Thrustlink
                 statusLabel.Text = "Disconnected";
                 statusLabel.ForeColor = Color.Red;
                 textBox1.Enabled = false;
+                dashboardGroupBox.Enabled = false;
             }
         }
 
@@ -142,6 +144,28 @@ namespace UAS_Thrustlink
             {
                 richTextBox1.AppendText(DateTime.Now.ToString("HH:mm:ss:fff") + " " + ex.Message + "\n");
             }
+        }
+
+        private void clearButton_Click(object sender, EventArgs e)
+        {
+            var confirmResult = MessageBox.Show(
+                "Clear the terminal?",
+                "",
+                MessageBoxButtons.YesNo, 
+                MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2);
+            if (confirmResult == DialogResult.Yes)
+            {
+                richTextBox1.Clear();
+            }
+        }
+
+        private void infoButton_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show(
+                "UAS Thrustlink\n\nCharles Surianto\nOctober 2023",
+                "",MessageBoxButtons.OK, 
+                MessageBoxIcon.Information);
         }
     }
 }
