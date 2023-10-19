@@ -1,6 +1,6 @@
 ﻿namespace UAS_Thrustlink
 {
-    partial class Form1
+    partial class Thrustlink
     {
         /// <summary>
         /// Required designer variable.
@@ -108,7 +108,7 @@
             this.textBox1.TabIndex = 6;
             this.textBox1.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox1_KeyPress);
             // 
-            // Form1
+            // Thrustlink
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -120,7 +120,7 @@
             this.Controls.Add(this.portComboBox);
             this.Controls.Add(this.richTextBox1);
             this.Margin = new System.Windows.Forms.Padding(2);
-            this.Name = "Form1";
+            this.Name = "Thrustlink";
             this.Text = "UAS Thrustlink";
             this.ResumeLayout(false);
             this.PerformLayout();

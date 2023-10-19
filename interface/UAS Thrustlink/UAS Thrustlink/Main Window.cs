@@ -11,9 +11,9 @@ using System.IO.Ports;
 
 namespace UAS_Thrustlink
 {
-    public partial class Form1 : Form
+    public partial class Thrustlink : Form
     {
-        public Form1()
+        public Thrustlink()
         {
             InitializeComponent();
         }
