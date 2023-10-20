@@ -562,7 +562,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             }
         }
 
-        int bufferSize = sprintf((char *)UARTATxBuffer, "%u %ld %ld", ESCPulse, Voltage, Current);
+        int bufferSize = sprintf((char *)UARTATxBuffer, "%u %ld.%ld %ld.%ld", ESCPulse, Voltage / 100, Voltage % 100, Current / 100, Current % 100);
 
         for (int i = 0; i < NUM_OF_CELLS; i++)
         {
