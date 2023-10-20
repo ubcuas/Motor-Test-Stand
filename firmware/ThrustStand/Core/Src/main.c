@@ -562,17 +562,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             }
         }
 
-        sprintf((char *)UARTATxBuffer, "%u %ld %ld", ESCPulse, Voltage, Current);
-
-        char strBuffer[20];
+        int bufferSize = sprintf((char *)UARTATxBuffer, "%u %ld %ld", ESCPulse, Voltage, Current);
 
         for (int i = 0; i < NUM_OF_CELLS; i++)
         {
-            sprintf((char *)strBuffer, " %ld", RawCellReadings[i]);
-            strcat((char *)UARTATxBuffer, (const char *)strBuffer);
+            bufferSize += sprintf(((char *)UARTATxBuffer + bufferSize), " %ld", RawCellReadings[i]);
         }
 
-        HAL_UART_Transmit_IT(&HUARTA, UARTATxBuffer, strlen((const char *)UARTATxBuffer));
+        HAL_UART_Transmit_IT(&HUARTA, UARTATxBuffer, bufferSize);
     }
 }
 
