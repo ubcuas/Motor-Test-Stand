@@ -65,7 +65,7 @@ uint16_t HX717DataPins[NUM_OF_CELLS] = {
     CELL6_Pin};
 int32_t RawCellReadings[NUM_OF_CELLS];
 uint8_t PulseCounter = 0;
-uint16_t ClockPulses[25];
+uint16_t ClockPulses[25] = {[0 ... 24] = 5};
 
 uint16_t RawADCReadings[2];
 int32_t Voltage; // cV
@@ -104,10 +104,7 @@ static void MX_TIM17_Init(void);
 int main(void)
 {
     /* USER CODE BEGIN 1 */
-    for (int i = 0; i < 25; i++)
-    {
-        ClockPulses[i] = 5;
-    }
+
     /* USER CODE END 1 */
 
     /* MCU Configuration--------------------------------------------------------*/
