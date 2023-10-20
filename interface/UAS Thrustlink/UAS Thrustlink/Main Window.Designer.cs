@@ -41,20 +41,21 @@
             this.infoButton = new System.Windows.Forms.Button();
             this.serialConnectionGroupBox = new System.Windows.Forms.GroupBox();
             this.dashboardGroupBox = new System.Windows.Forms.GroupBox();
+            this.signalLabel = new System.Windows.Forms.Label();
+            this.pulseNumericBox = new System.Windows.Forms.NumericUpDown();
             this.pulseTrackBar = new System.Windows.Forms.TrackBar();
             this.clearButton = new System.Windows.Forms.Button();
             this.saveButton = new System.Windows.Forms.Button();
-            this.pulseNumericBox = new System.Windows.Forms.NumericUpDown();
-            this.signalLabel = new System.Windows.Forms.Label();
+            this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.serialConnectionGroupBox.SuspendLayout();
             this.dashboardGroupBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pulseTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pulseNumericBox)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pulseTrackBar)).BeginInit();
             this.SuspendLayout();
             // 
             // serialPort1
             // 
-            this.serialPort1.BaudRate = 115200;
+            this.serialPort1.BaudRate = 250000;
             this.serialPort1.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(this.serialPort1_DataReceived);
             // 
             // timer1
@@ -162,12 +163,45 @@
             this.dashboardGroupBox.Controls.Add(this.signalLabel);
             this.dashboardGroupBox.Controls.Add(this.pulseNumericBox);
             this.dashboardGroupBox.Controls.Add(this.pulseTrackBar);
+            this.dashboardGroupBox.Enabled = false;
             this.dashboardGroupBox.Location = new System.Drawing.Point(12, 74);
             this.dashboardGroupBox.Name = "dashboardGroupBox";
             this.dashboardGroupBox.Size = new System.Drawing.Size(860, 200);
             this.dashboardGroupBox.TabIndex = 9;
             this.dashboardGroupBox.TabStop = false;
             this.dashboardGroupBox.Text = "Dashboard";
+            // 
+            // signalLabel
+            // 
+            this.signalLabel.AutoSize = true;
+            this.signalLabel.Location = new System.Drawing.Point(12, 125);
+            this.signalLabel.Name = "signalLabel";
+            this.signalLabel.Size = new System.Drawing.Size(39, 13);
+            this.signalLabel.TabIndex = 2;
+            this.signalLabel.Text = "Signal:";
+            // 
+            // pulseNumericBox
+            // 
+            this.pulseNumericBox.Location = new System.Drawing.Point(57, 123);
+            this.pulseNumericBox.Maximum = new decimal(new int[] {
+            2000,
+            0,
+            0,
+            0});
+            this.pulseNumericBox.Minimum = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            this.pulseNumericBox.Name = "pulseNumericBox";
+            this.pulseNumericBox.Size = new System.Drawing.Size(51, 20);
+            this.pulseNumericBox.TabIndex = 1;
+            this.pulseNumericBox.Value = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            this.pulseNumericBox.ValueChanged += new System.EventHandler(this.pulseNumericBox_ValueChanged);
             // 
             // pulseTrackBar
             // 
@@ -207,38 +241,13 @@
             this.saveButton.TabIndex = 11;
             this.saveButton.Text = "Save";
             this.saveButton.UseVisualStyleBackColor = true;
+            this.saveButton.Click += new System.EventHandler(this.saveButton_Click);
             // 
-            // pulseNumericBox
+            // saveFileDialog1
             // 
-            this.pulseNumericBox.Location = new System.Drawing.Point(57, 123);
-            this.pulseNumericBox.Maximum = new decimal(new int[] {
-            2000,
-            0,
-            0,
-            0});
-            this.pulseNumericBox.Minimum = new decimal(new int[] {
-            1000,
-            0,
-            0,
-            0});
-            this.pulseNumericBox.Name = "pulseNumericBox";
-            this.pulseNumericBox.Size = new System.Drawing.Size(51, 20);
-            this.pulseNumericBox.TabIndex = 1;
-            this.pulseNumericBox.Value = new decimal(new int[] {
-            1000,
-            0,
-            0,
-            0});
-            this.pulseNumericBox.ValueChanged += new System.EventHandler(this.pulseNumericBox_ValueChanged);
-            // 
-            // signalLabel
-            // 
-            this.signalLabel.AutoSize = true;
-            this.signalLabel.Location = new System.Drawing.Point(12, 125);
-            this.signalLabel.Name = "signalLabel";
-            this.signalLabel.Size = new System.Drawing.Size(39, 13);
-            this.signalLabel.TabIndex = 2;
-            this.signalLabel.Text = "Signal:";
+            this.saveFileDialog1.DefaultExt = "txt";
+            this.saveFileDialog1.FileName = "log";
+            this.saveFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.saveFileDialog1_FileOk);
             // 
             // Thrustlink
             // 
@@ -262,8 +271,8 @@
             this.serialConnectionGroupBox.PerformLayout();
             this.dashboardGroupBox.ResumeLayout(false);
             this.dashboardGroupBox.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pulseTrackBar)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pulseNumericBox)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pulseTrackBar)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -287,6 +296,7 @@
         private System.Windows.Forms.TrackBar pulseTrackBar;
         private System.Windows.Forms.NumericUpDown pulseNumericBox;
         private System.Windows.Forms.Label signalLabel;
+        private System.Windows.Forms.SaveFileDialog saveFileDialog1;
     }
 }
 

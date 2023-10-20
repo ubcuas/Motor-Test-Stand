@@ -50,6 +50,7 @@ namespace UAS_Thrustlink
             }
             catch (Exception ex)
             {
+                // exception when writing to serial
                 serialPort1.Close();
                 updateVisuals();
 
@@ -98,14 +99,17 @@ namespace UAS_Thrustlink
                     // establish the connection
                     serialPort1.PortName = portComboBox.Text;
                     serialPort1.Open();
-                    richTextBox1.Clear();
-                    pulseNumericBox.Value = 1000;
+
+                    richTextBox1.Clear(); // clear the monitor
+
+                    pulseNumericBox.Value = 1000; // set the pulse to 0%
+
+                    timer1.Enabled = true; // enable timeout timer
                 }
                 catch (Exception ex)
                 {
                     richTextBox1.AppendText(DateTime.Now.ToString("HH:mm:ss:fff") + " " + ex.Message + "\n");
                 }
-                timer1.Enabled = true;
             }
             updateVisuals();
         }
@@ -179,6 +183,16 @@ namespace UAS_Thrustlink
         private void pulseTrackBar_ValueChanged(object sender, EventArgs e)
         {
             pulseNumericBox.Value = pulseTrackBar.Value;
+        }
+
+        private void saveButton_Click(object sender, EventArgs e)
+        {
+            saveFileDialog1.ShowDialog();
+        }
+
+        private void saveFileDialog1_FileOk(object sender, CancelEventArgs e)
+        {
+            richTextBox1.SaveFile(saveFileDialog1.FileName, RichTextBoxStreamType.PlainText);
         }
     }
 }
