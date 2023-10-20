@@ -42,6 +42,7 @@ ADC_HandleTypeDef hadc2;
 DMA_HandleTypeDef hdma_adc2;
 
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim16;
 TIM_HandleTypeDef htim17;
 DMA_HandleTypeDef hdma_tim3_ch1;
 
@@ -88,6 +89,7 @@ static void MX_USART3_UART_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_TIM17_Init(void);
+static void MX_TIM16_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -131,9 +133,10 @@ int main(void)
     MX_TIM3_Init();
     MX_ADC2_Init();
     MX_TIM17_Init();
+    MX_TIM16_Init();
     /* USER CODE BEGIN 2 */
     HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1); // start listening
-    /* USER CODE END 2 */
+                                                   /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
@@ -307,6 +310,37 @@ static void MX_TIM3_Init(void)
     HAL_TIM_Base_Start_IT(&htim3);
     /* USER CODE END TIM3_Init 2 */
     HAL_TIM_MspPostInit(&htim3);
+}
+
+/**
+ * @brief TIM16 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM16_Init(void)
+{
+
+    /* USER CODE BEGIN TIM16_Init 0 */
+
+    /* USER CODE END TIM16_Init 0 */
+
+    /* USER CODE BEGIN TIM16_Init 1 */
+
+    /* USER CODE END TIM16_Init 1 */
+    htim16.Instance = TIM16;
+    htim16.Init.Prescaler = 17000 - 1;
+    htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim16.Init.Period = 3000;
+    htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    htim16.Init.RepetitionCounter = 0;
+    htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    if (HAL_TIM_Base_Init(&htim16) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN TIM16_Init 2 */
+    HAL_TIM_Base_Start_IT(&htim16);
+    /* USER CODE END TIM16_Init 2 */
 }
 
 /**
@@ -533,6 +567,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         }
     }
 
+    // uart timeout
+    if (htim == &htim16)
+    {
+        ESCPulse = 1000; // set throttle to 0%
+        __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
+    }
+
     // periodic interrupt (PWM 50Hz)
     if (htim == &htim17)
     {
@@ -615,6 +656,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             UARTARxBuffer[UARTARxCounter++] = UARTARxByte;
         }
 
+        // reset uart timeout timer
+        __HAL_TIM_SET_COUNTER(&htim16, 0);
+
+        // listen for the next message
         HAL_UART_Receive_IT(huart, &UARTARxByte, 1);
     }
 
