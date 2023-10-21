@@ -135,8 +135,8 @@ int main(void)
     MX_TIM17_Init();
     MX_TIM16_Init();
     /* USER CODE BEGIN 2 */
-    HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1); // start listening
-                                                   /* USER CODE END 2 */
+
+    /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
@@ -495,7 +495,7 @@ static void MX_USART3_UART_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN USART3_Init 2 */
-
+    HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1);
     /* USER CODE END USART3_Init 2 */
 }
 
