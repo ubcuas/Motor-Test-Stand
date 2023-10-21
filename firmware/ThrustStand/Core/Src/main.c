@@ -641,7 +641,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
             // save and set esc pulse
             ESCPulse = (UARTARxBuffer[0] - '0') * 1000  //
-                       + (UARTARxBuffer[1] - '0' * 100) //
+                       + (UARTARxBuffer[1] - '0') * 100 //
                        + (UARTARxBuffer[2] - '0') * 10  //
                        + (UARTARxBuffer[3] - '0');      //
 
