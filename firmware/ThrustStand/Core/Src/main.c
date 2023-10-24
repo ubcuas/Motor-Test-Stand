@@ -160,7 +160,7 @@ void SystemClock_Config(void)
 
     /** Configure the main internal regulator output voltage
      */
-    HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1_BOOST);
+    HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1);
 
     /** Initializes the RCC Oscillators according to the specified parameters
      * in the RCC_OscInitTypeDef structure.
@@ -169,8 +169,8 @@ void SystemClock_Config(void)
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV5;
-    RCC_OscInitStruct.PLL.PLLN = 68;
+    RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV2;
+    RCC_OscInitStruct.PLL.PLLN = 24;
     RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
     RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
     RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
@@ -283,7 +283,7 @@ static void MX_TIM3_Init(void)
 
     /* USER CODE END TIM3_Init 1 */
     htim3.Instance = TIM3;
-    htim3.Init.Prescaler = 170 - 1;
+    htim3.Init.Prescaler = 150 - 1;
     htim3.Init.CounterMode = TIM_COUNTERMODE_DOWN;
     htim3.Init.Period = 9;
     htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -328,7 +328,7 @@ static void MX_TIM16_Init(void)
 
     /* USER CODE END TIM16_Init 1 */
     htim16.Instance = TIM16;
-    htim16.Init.Prescaler = 17000 - 1;
+    htim16.Init.Prescaler = 15000 - 1;
     htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
     htim16.Init.Period = 2999;
     htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -362,7 +362,7 @@ static void MX_TIM17_Init(void)
 
     /* USER CODE END TIM17_Init 1 */
     htim17.Instance = TIM17;
-    htim17.Init.Prescaler = 170 - 1;
+    htim17.Init.Prescaler = 150 - 1;
     htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
     htim17.Init.Period = 19999;
     htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -400,6 +400,7 @@ static void MX_TIM17_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN TIM17_Init 2 */
+    HAL_TIM_Base_Start_IT(&htim17);
     HAL_TIM_PWM_Start_IT(&htim17, TIM_CHANNEL_1);
     /* USER CODE END TIM17_Init 2 */
     HAL_TIM_MspPostInit(&htim17);
@@ -421,7 +422,7 @@ static void MX_USART2_UART_Init(void)
 
     /* USER CODE END USART2_Init 1 */
     huart2.Instance = USART2;
-    huart2.Init.BaudRate = 500000;
+    huart2.Init.BaudRate = 250000;
     huart2.Init.WordLength = UART_WORDLENGTH_8B;
     huart2.Init.StopBits = UART_STOPBITS_1;
     huart2.Init.Parity = UART_PARITY_NONE;
@@ -468,7 +469,7 @@ static void MX_USART3_UART_Init(void)
 
     /* USER CODE END USART3_Init 1 */
     huart3.Instance = USART3;
-    huart3.Init.BaudRate = 500000;
+    huart3.Init.BaudRate = 115200;
     huart3.Init.WordLength = UART_WORDLENGTH_8B;
     huart3.Init.StopBits = UART_STOPBITS_1;
     huart3.Init.Parity = UART_PARITY_NONE;
@@ -477,7 +478,9 @@ static void MX_USART3_UART_Init(void)
     huart3.Init.OverSampling = UART_OVERSAMPLING_16;
     huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
     huart3.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-    huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+    huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_AUTOBAUDRATE_INIT;
+    huart3.AdvancedInit.AutoBaudRateEnable = UART_ADVFEATURE_AUTOBAUDRATE_ENABLE;
+    huart3.AdvancedInit.AutoBaudRateMode = UART_ADVFEATURE_AUTOBAUDRATE_ONSTARTBIT;
     if (HAL_UART_Init(&huart3) != HAL_OK)
     {
         Error_Handler();
@@ -606,6 +609,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         {
             bufferSize += sprintf(((char *)UARTATxBuffer + bufferSize), " %ld", RawCellReadings[i]);
         }
+        bufferSize += sprintf(((char *)UARTATxBuffer + bufferSize), "\n");
 
         HAL_UART_Transmit_IT(&HUARTA, UARTATxBuffer, bufferSize);
     }
@@ -640,13 +644,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             UARTARxCounter = 0;                // reset counter
 
             // save and set esc pulse
-            ESCPulse = (UARTARxBuffer[0] - '0') * 1000  //
+            int receivedPulse = (UARTARxBuffer[0] - '0') * 1000  //
                        + (UARTARxBuffer[1] - '0') * 100 //
                        + (UARTARxBuffer[2] - '0') * 10  //
                        + (UARTARxBuffer[3] - '0');      //
 
-            if (ESCPulse >= 1000 && ESCPulse <= 2000)
+            if (receivedPulse >= 1000 && receivedPulse <= 2000)
             {
+                ESCPulse = receivedPulse;
                 __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
             }
         }
