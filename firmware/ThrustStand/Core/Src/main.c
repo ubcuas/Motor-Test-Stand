@@ -86,10 +86,10 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
-static void MX_TIM3_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_TIM17_Init(void);
 static void MX_TIM16_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -130,10 +130,10 @@ int main(void)
     MX_DMA_Init();
     MX_USART2_UART_Init();
     MX_USART3_UART_Init();
-    MX_TIM3_Init();
     MX_ADC2_Init();
-    MX_TIM17_Init();
+    MX_TIM3_Init();
     MX_TIM16_Init();
+    MX_TIM17_Init();
     /* USER CODE BEGIN 2 */
 
     /* USER CODE END 2 */
@@ -276,6 +276,7 @@ static void MX_TIM3_Init(void)
 
     /* USER CODE END TIM3_Init 0 */
 
+    TIM_ClockConfigTypeDef sClockSourceConfig = {0};
     TIM_MasterConfigTypeDef sMasterConfig = {0};
     TIM_OC_InitTypeDef sConfigOC = {0};
 
@@ -288,6 +289,15 @@ static void MX_TIM3_Init(void)
     htim3.Init.Period = 9;
     htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+    if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
     if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
     {
         Error_Handler();
@@ -645,9 +655,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
             // save and set esc pulse
             int receivedPulse = (UARTARxBuffer[0] - '0') * 1000  //
-                       + (UARTARxBuffer[1] - '0') * 100 //
-                       + (UARTARxBuffer[2] - '0') * 10  //
-                       + (UARTARxBuffer[3] - '0');      //
+                                + (UARTARxBuffer[1] - '0') * 100 //
+                                + (UARTARxBuffer[2] - '0') * 10  //
+                                + (UARTARxBuffer[3] - '0');      //
 
             if (receivedPulse >= 1000 && receivedPulse <= 2000)
             {
