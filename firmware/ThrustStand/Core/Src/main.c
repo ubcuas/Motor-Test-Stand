@@ -734,7 +734,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         UARTATimedOut = 0; // reset flag
 
         // listen for the next message
-        HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1)
+        HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1);
     }
 
     // if (huart == &HUARTB)
