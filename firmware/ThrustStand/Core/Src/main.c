@@ -42,6 +42,7 @@ ADC_HandleTypeDef hadc2;
 DMA_HandleTypeDef hdma_adc2;
 
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim15;
 TIM_HandleTypeDef htim16;
 TIM_HandleTypeDef htim17;
 DMA_HandleTypeDef hdma_tim3_ch1;
@@ -91,6 +92,7 @@ static void MX_ADC2_Init(void);
 static void MX_TIM17_Init(void);
 static void MX_TIM16_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_TIM15_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -135,6 +137,7 @@ int main(void)
     MX_TIM17_Init();
     MX_TIM16_Init();
     MX_TIM3_Init();
+    MX_TIM15_Init();
     /* USER CODE BEGIN 2 */
 
     /* USER CODE END 2 */
@@ -324,6 +327,51 @@ static void MX_TIM3_Init(void)
 }
 
 /**
+ * @brief TIM15 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM15_Init(void)
+{
+
+    /* USER CODE BEGIN TIM15_Init 0 */
+
+    /* USER CODE END TIM15_Init 0 */
+
+    TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+    TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+    /* USER CODE BEGIN TIM15_Init 1 */
+
+    /* USER CODE END TIM15_Init 1 */
+    htim15.Instance = TIM15;
+    htim15.Init.Prescaler = 1500 - 1;
+    htim15.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim15.Init.Period = 5000;
+    htim15.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    htim15.Init.RepetitionCounter = 0;
+    htim15.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    if (HAL_TIM_Base_Init(&htim15) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+    if (HAL_TIM_ConfigClockSource(&htim15, &sClockSourceConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    if (HAL_TIMEx_MasterConfigSynchronization(&htim15, &sMasterConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN TIM15_Init 2 */
+    HAL_TIM_Base_Start_IT(&htim15);
+    /* USER CODE END TIM15_Init 2 */
+}
+
+/**
  * @brief TIM16 Initialization Function
  * @param None
  * @retval None
@@ -411,8 +459,7 @@ static void MX_TIM17_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN TIM17_Init 2 */
-    HAL_TIM_Base_Start_IT(&htim17);
-    HAL_TIM_PWM_Start_IT(&htim17, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim17, TIM_CHANNEL_1);
     /* USER CODE END TIM17_Init 2 */
     HAL_TIM_MspPostInit(&htim17);
 }
@@ -581,16 +628,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         }
     }
 
-    // uart timeout
-    if (htim == &htim16)
-    {
-        ESCPulse = 1000; // set throttle to 0%
-        __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
-        UARTATimedOut = 1; // set flag
-    }
-
-    // periodic interrupt (PWM 50Hz)
-    if (htim == &htim17)
+    // periodic interrupt
+    if (htim == &htim15)
     {
         // start next cycle read
         if (HAL_GPIO_ReadPin(GPIOB, CELL1_Pin | CELL2_Pin | CELL3_Pin | CELL4_Pin | CELL5_Pin | CELL6_Pin) == 0)
@@ -631,6 +670,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             // write to serial
             HAL_UART_Transmit_IT(&HUARTA, UARTATxBuffer, bufferSize);
         }
+    }
+
+    // uart timeout
+    if (htim == &htim16)
+    {
+        ESCPulse = 1000; // set throttle to 0%
+        __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
+        UARTATimedOut = 1; // set flag
     }
 }
 
@@ -690,20 +737,20 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1)
     }
 
-    if (huart == &HUARTB)
-    {
-    }
+    // if (huart == &HUARTB)
+    // {
+    // }
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if (huart == &HUARTA)
-    {
-    }
+    // if (huart == &HUARTA)
+    // {
+    // }
 
-    if (huart == &HUARTB)
-    {
-    }
+    // if (huart == &HUARTB)
+    // {
+    // }
 }
 /* USER CODE END 4 */
 
