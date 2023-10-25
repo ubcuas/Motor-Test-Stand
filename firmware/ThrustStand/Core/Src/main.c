@@ -605,7 +605,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         if (!UARTATimedOut)
         {
             // failsafe calling
-            // HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1);
+            HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1);
 
             // extend RawCellReadings sign bits
             for (int i = 0; i < NUM_OF_CELLS; i++)
@@ -687,8 +687,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         UARTATimedOut = 0; // reset flag
 
         // listen for the next message
-        while (HAL_OK != HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1))
-            ;
+        HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1)
     }
 
     if (huart == &HUARTB)
