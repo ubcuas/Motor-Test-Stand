@@ -66,7 +66,7 @@ uint16_t HX717DataPins[NUM_OF_CELLS] = {
     CELL6_Pin};
 int32_t RawCellReadings[NUM_OF_CELLS];
 uint8_t PulseCounter = 0;
-uint16_t ClockPulses[25] = {[0 ... 24] = 5};
+uint16_t ClockPulses[25] = {[0 ... 24] = 4};
 
 uint16_t RawADCReadings[2];
 int32_t Voltage; // cV
@@ -76,6 +76,7 @@ uint8_t UARTARxCounter = 0;
 uint8_t UARTARxByte;
 uint8_t UARTARxBuffer[UART_RX_BUFFER_SIZE];
 uint8_t UARTATxBuffer[UART_TX_BUFFER_SIZE];
+uint8_t UARTATimedOut = 0;
 
 uint16_t ESCPulse = 1000;
 /* USER CODE END PV */
@@ -131,9 +132,9 @@ int main(void)
     MX_USART2_UART_Init();
     MX_USART3_UART_Init();
     MX_ADC2_Init();
-    MX_TIM3_Init();
-    MX_TIM16_Init();
     MX_TIM17_Init();
+    MX_TIM16_Init();
+    MX_TIM3_Init();
     /* USER CODE BEGIN 2 */
 
     /* USER CODE END 2 */
@@ -229,8 +230,8 @@ static void MX_ADC2_Init(void)
     hadc2.Init.DMAContinuousRequests = DISABLE;
     hadc2.Init.Overrun = ADC_OVR_DATA_PRESERVED;
     hadc2.Init.OversamplingMode = ENABLE;
-    hadc2.Init.Oversampling.Ratio = ADC_OVERSAMPLING_RATIO_8;
-    hadc2.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_3;
+    hadc2.Init.Oversampling.Ratio = ADC_OVERSAMPLING_RATIO_256;
+    hadc2.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_8;
     hadc2.Init.Oversampling.TriggeredMode = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;
     hadc2.Init.Oversampling.OversamplingStopReset = ADC_REGOVERSAMPLING_CONTINUED_MODE;
     if (HAL_ADC_Init(&hadc2) != HAL_OK)
@@ -585,6 +586,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
         ESCPulse = 1000; // set throttle to 0%
         __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
+        UARTATimedOut = 1; // set flag
     }
 
     // periodic interrupt (PWM 50Hz)
@@ -600,28 +602,35 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         // start adc reading
         HAL_ADC_Start_DMA(&hadc2, (uint32_t *)RawADCReadings, 2);
 
-        // extend RawCellReadings sign bits
-        for (int i = 0; i < NUM_OF_CELLS; i++)
+        if (!UARTATimedOut)
         {
-            if ((RawCellReadings[i] & (1 << 23)) != 0)
+            // failsafe calling
+            // HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1);
+
+            // extend RawCellReadings sign bits
+            for (int i = 0; i < NUM_OF_CELLS; i++)
             {
-                RawCellReadings[i] |= 0xff000000;
+                if ((RawCellReadings[i] & (1 << 23)) != 0)
+                {
+                    RawCellReadings[i] |= 0xff000000;
+                }
+                else
+                {
+                    RawCellReadings[i] &= 0x00ffffff;
+                }
             }
-            else
+
+            // cook the string
+            int bufferSize = sprintf((char *)UARTATxBuffer, "%u %ld.%ld %ld.%ld", ESCPulse, Voltage / 100, Voltage % 100, Current / 100, Current % 100);
+            for (int i = 0; i < NUM_OF_CELLS; i++)
             {
-                RawCellReadings[i] &= 0x00ffffff;
+                bufferSize += sprintf(((char *)UARTATxBuffer + bufferSize), " %ld", RawCellReadings[i]);
             }
+            bufferSize += sprintf(((char *)UARTATxBuffer + bufferSize), "\n");
+
+            // write to serial
+            HAL_UART_Transmit_IT(&HUARTA, UARTATxBuffer, bufferSize);
         }
-
-        int bufferSize = sprintf((char *)UARTATxBuffer, "%u %ld.%ld %ld.%ld", ESCPulse, Voltage / 100, Voltage % 100, Current / 100, Current % 100);
-
-        for (int i = 0; i < NUM_OF_CELLS; i++)
-        {
-            bufferSize += sprintf(((char *)UARTATxBuffer + bufferSize), " %ld", RawCellReadings[i]);
-        }
-        bufferSize += sprintf(((char *)UARTATxBuffer + bufferSize), "\n");
-
-        HAL_UART_Transmit_IT(&HUARTA, UARTATxBuffer, bufferSize);
     }
 }
 
@@ -629,8 +638,9 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim == &htim3)
     {
-        PulseCounter = 0;                          // reset counter
-        HAL_TIM_PWM_Stop_DMA(htim, TIM_CHANNEL_1); // stop clock pulses
+        __HAL_TIM_SET_COUNTER(&htim3, 0xffff);       // set pin low
+        HAL_TIM_PWM_Stop_DMA(&htim3, TIM_CHANNEL_1); // stop clock pulses
+        PulseCounter = 0;                            // reset counter
     }
 }
 
@@ -674,8 +684,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         // reset uart timeout timer
         __HAL_TIM_SET_COUNTER(&htim16, 0);
 
+        UARTATimedOut = 0; // reset flag
+
         // listen for the next message
-        HAL_UART_Receive_IT(huart, &UARTARxByte, 1);
+        while (HAL_OK != HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1))
+            ;
     }
 
     if (huart == &HUARTB)
