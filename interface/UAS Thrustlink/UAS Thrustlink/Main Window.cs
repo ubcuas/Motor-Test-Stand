@@ -47,6 +47,7 @@ namespace UAS_Thrustlink
             try
             {
                 serialPort1.Write(pulseNumericBox.Value.ToString() + "\n");
+                // richTextBox1.AppendText(DateTime.Now.ToString("HH:mm:ss:fff") + " Sent " + pulseNumericBox.Value.ToString() + "\n");
             }
             catch (Exception ex)
             {
@@ -55,6 +56,8 @@ namespace UAS_Thrustlink
                 updateVisuals();
 
                 timer1.Enabled = false;
+
+                // richTextBox1.AppendText(DateTime.Now.ToString("HH:mm:ss:fff") + " " + ex.Message + "\n");
             }
         }
 
@@ -145,6 +148,8 @@ namespace UAS_Thrustlink
             try
             {
                 richTextBox1.AppendText(DateTime.Now.ToString("HH:mm:ss:fff") + " " + serialPort1.ReadLine() + "\n");
+
+                serialPort1.DiscardInBuffer(); // to prevent congestion
             }
             catch (Exception ex)
             {
