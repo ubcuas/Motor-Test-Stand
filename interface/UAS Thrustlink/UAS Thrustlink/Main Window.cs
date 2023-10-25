@@ -149,7 +149,7 @@ namespace UAS_Thrustlink
             {
                 richTextBox1.AppendText(DateTime.Now.ToString("HH:mm:ss:fff") + " " + serialPort1.ReadLine() + "\n");
 
-                serialPort1.DiscardInBuffer(); // to prevent congestion
+                // serialPort1.DiscardInBuffer(); // to prevent congestion
             }
             catch (Exception ex)
             {
