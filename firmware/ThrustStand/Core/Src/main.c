@@ -643,8 +643,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
         if (!UARTATimedOut)
         {
-            // failsafe calling
-            HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1);
 
             // extend RawCellReadings sign bits
             for (int i = 0; i < NUM_OF_CELLS; i++)
@@ -678,6 +676,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         ESCPulse = 1000; // set throttle to 0%
         __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
         UARTATimedOut = 1; // set flag
+
+        // failsafe calling
+        HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1);
     }
 }
 
