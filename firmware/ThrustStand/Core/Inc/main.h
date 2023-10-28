@@ -90,9 +90,6 @@ void Error_Handler(void);
 #define HUARTB huart2
 #define UART_RX_BUFFER_SIZE 20
 #define UART_TX_BUFFER_SIZE 200
-#define ADC_PER_VOLT 73178
-#define ADC_PER_AMP 40950
-#define AMP_OFFSET 5000
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
