@@ -70,8 +70,11 @@ uint8_t PulseCounter = 0;
 uint16_t ClockPulses[25] = {[0 ... 24] = 4};
 
 uint16_t RawADCReadings[2];
-int32_t Voltage; // cV
-int32_t Current; // cA
+float Voltage;
+float Current;
+float VoltPerADC = 1.88571428571E-2F;
+float AmpPerADC = 2.01416015625E-2F;
+float AmpOffset = 50;
 
 uint8_t UARTARxCounter = 0;
 uint8_t UARTARxByte;
@@ -658,7 +661,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             }
 
             // cook the string
-            int bufferSize = sprintf((char *)UARTATxBuffer, "%u %ld.%ld %ld.%ld", ESCPulse, Voltage / 100, Voltage % 100, Current / 100, Current % 100);
+            int bufferSize = sprintf((char *)UARTATxBuffer, "%u %.2f %.2f", ESCPulse, Voltage, Current);
             for (int i = 0; i < NUM_OF_CELLS; i++)
             {
                 bufferSize += sprintf(((char *)UARTATxBuffer + bufferSize), " %ld", RawCellReadings[i]);
@@ -697,8 +700,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     if (hadc == &hadc2)
     {
         // convert raw to volts and amps
-        Voltage = RawADCReadings[0] * 100000 / ADC_PER_VOLT;
-        Current = RawADCReadings[1] * 100000 / ADC_PER_AMP - AMP_OFFSET;
+        Voltage = (float)RawADCReadings[0] * VoltPerADC;
+        Current = (float)RawADCReadings[1] * AmpPerADC - AmpOffset;
     }
 }
 
@@ -711,16 +714,35 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             UARTARxBuffer[UARTARxCounter] = 0; // put line ending
             UARTARxCounter = 0;                // reset counter
 
-            // save and set esc pulse
-            int receivedPulse = (UARTARxBuffer[0] - '0') * 1000  //
-                                + (UARTARxBuffer[1] - '0') * 100 //
-                                + (UARTARxBuffer[2] - '0') * 10  //
-                                + (UARTARxBuffer[3] - '0');      //
+            float temp;
 
-            if (receivedPulse >= 1000 && receivedPulse <= 2000)
+            switch (UARTARxBuffer[0])
             {
-                ESCPulse = receivedPulse;
-                __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
+            case 'V':
+                sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
+                VoltPerADC *= temp;
+                break;
+            case 'A':
+                sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
+                AmpPerADC *= temp;
+                break;
+            case 'O':
+                sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
+                AmpOffset += temp;
+                break;
+            default:
+                // save and set esc pulse
+                int receivedPulse = (UARTARxBuffer[0] - '0') * 1000  //
+                                    + (UARTARxBuffer[1] - '0') * 100 //
+                                    + (UARTARxBuffer[2] - '0') * 10  //
+                                    + (UARTARxBuffer[3] - '0');      //
+
+                if (receivedPulse >= 1000 && receivedPulse <= 2000)
+                {
+                    ESCPulse = receivedPulse;
+                    __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
+                }
+                break;
             }
         }
         else
