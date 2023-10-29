@@ -72,8 +72,8 @@ uint16_t ClockPulses[25] = {[0 ... 24] = 4};
 uint16_t RawADCReadings[2];
 float Voltage;
 float Current;
-float VoltPerADC = 1.88571428571E-2F;
-float AmpPerADC = 2.01416015625E-2F;
+float VoltPerADC = 1.40822486624E-2F;
+float AmpPerADC = 2.6271654212E-2F;
 float AmpOffset = 50;
 
 uint8_t UARTARxCounter = 0;
@@ -725,6 +725,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             case 'A':
                 sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
                 AmpPerADC *= temp;
+                AmpOffset *= temp;
                 break;
             case 'O':
                 sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
