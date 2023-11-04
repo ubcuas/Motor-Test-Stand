@@ -83,6 +83,7 @@ uint8_t UARTATxBuffer[UART_TX_BUFFER_SIZE];
 uint8_t UARTATimedOut = 0;
 
 uint16_t ESCPulse = 1000;
+uint16_t PrevESCPulse;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -740,8 +741,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
                 if (receivedPulse >= 1000 && receivedPulse <= 2000)
                 {
-                    ESCPulse = receivedPulse;
-                    __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
+                    if (receivedPulse == PrevESCPulse)
+                    {
+                        ESCPulse = receivedPulse;
+                        __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
+                    }
+                    PrevESCPulse = receivedPulse;
                 }
                 break;
             }
