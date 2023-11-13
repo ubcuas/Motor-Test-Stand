@@ -647,7 +647,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
         if (!UARTATimedOut)
         {
-
             // extend RawCellReadings sign bits
             for (int i = 0; i < NUM_OF_CELLS; i++)
             {
@@ -710,6 +709,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart == &HUARTA)
     {
+        // reset uart timeout timer
+        __HAL_TIM_SET_COUNTER(&htim16, 0);
+
+        UARTATimedOut = 0; // reset flag
+        
         if (UARTARxByte == '\n' || UARTARxByte == '\r' || UARTARxCounter >= UART_RX_BUFFER_SIZE)
         {
             UARTARxBuffer[UARTARxCounter] = 0; // put line ending
@@ -756,11 +760,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             // fill the buffer
             UARTARxBuffer[UARTARxCounter++] = UARTARxByte;
         }
-
-        // reset uart timeout timer
-        __HAL_TIM_SET_COUNTER(&htim16, 0);
-
-        UARTATimedOut = 0; // reset flag
 
         // listen for the next message
         HAL_UART_Receive_IT(&HUARTA, &UARTARxByte, 1);
