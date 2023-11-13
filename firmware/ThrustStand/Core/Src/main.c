@@ -65,7 +65,7 @@ uint16_t HX717DataPins[NUM_OF_CELLS] = {
     CELL5_Pin,
     CELL6_Pin};
 int32_t RawCellReadings[NUM_OF_CELLS];
-uint8_t PulseCounter = 0;
+uint8_t PulseCounter = -1;
 // uint16_t ClockPulses[25] = {[0 ... 24] = 4};
 
 uint16_t RawADCReadings[2];
@@ -610,11 +610,11 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HX717_Init(void)
 {
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 10); // 100% duty cycle
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);         // start pwm
-    HAL_Delay(1);                                     // wait
-    HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_1);          // stop pwm
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 5);  // 50% duty cycle
+    // __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 10); // 100% duty cycle
+    __HAL_TIM_SET_COUNTER(&htim3, 0);
+    HAL_Delay(1); // wait
+    // __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 5);  // 50% duty cycle
+    PulseCounter = 0;
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
