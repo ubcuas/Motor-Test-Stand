@@ -723,7 +723,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
         if (UARTARxByte == '\n' || UARTARxByte == '\r' || UARTARxCounter >= UART_RX_BUFFER_SIZE)
         {
-            UARTARxBuffer[UARTARxCounter] = 0; // put line ending
+            UARTARxBuffer[UARTARxCounter] = 0; // put string terminator
             UARTARxCounter = 0;                // reset counter
 
             float temp;
