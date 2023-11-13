@@ -97,7 +97,7 @@ static void MX_TIM16_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM15_Init(void);
 /* USER CODE BEGIN PFP */
-
+void HX717_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -142,7 +142,7 @@ int main(void)
     MX_TIM3_Init();
     MX_TIM15_Init();
     /* USER CODE BEGIN 2 */
-
+    HX717_Init();
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -608,6 +608,15 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HX717_Init(void)
+{
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 10);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+    HAL_Delay(1);
+    HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_1);
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 5);
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     // periodic interrupt
