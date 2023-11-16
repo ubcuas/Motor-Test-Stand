@@ -65,8 +65,7 @@ uint16_t HX717DataPins[NUM_OF_CELLS] = {
     CELL5_Pin,
     CELL6_Pin};
 int32_t RawCellReadings[NUM_OF_CELLS];
-uint8_t PulseCounter = -1;
-// uint16_t ClockPulses[25] = {[0 ... 24] = 4};
+int8_t PulseCounter = -1;
 
 uint16_t RawADCReadings[2];
 float Voltage;
@@ -316,7 +315,7 @@ static void MX_TIM3_Init(void)
         Error_Handler();
     }
     sConfigOC.OCMode = TIM_OCMODE_PWM1;
-    sConfigOC.Pulse = 5;
+    sConfigOC.Pulse = 4;
     sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
     sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
     if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
@@ -610,10 +609,12 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HX717_Init(void)
 {
-    // __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 10); // 100% duty cycle
-    __HAL_TIM_SET_COUNTER(&htim3, 0);
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 20); // 100% duty cycle
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
     HAL_Delay(1); // wait
-    // __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 5);  // 50% duty cycle
+    __HAL_TIM_SET_COUNTER(&htim3, 0xffff);
+    HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_1);
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 4);
     PulseCounter = 0;
 }
 
@@ -692,12 +693,11 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
                 }
             }
         }
-
-        if (PulseCounter >= 25)
+        else if (PulseCounter >= 25)
         {
+            __HAL_TIM_SET_COUNTER(&htim3, 0xffff);      // set pin low
             HAL_TIM_PWM_Stop_IT(&htim3, TIM_CHANNEL_1); // stop clock pulses
-            // __HAL_TIM_SET_COUNTER(&htim3, 0xffff);      // set pin low
-            PulseCounter = 0; // reset counter
+            PulseCounter = 0;                           // reset counter
         }
     }
 }
