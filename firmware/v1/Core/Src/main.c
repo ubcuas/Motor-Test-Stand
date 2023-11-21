@@ -45,7 +45,6 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim15;
 TIM_HandleTypeDef htim16;
 TIM_HandleTypeDef htim17;
-DMA_HandleTypeDef hdma_tim3_ch1;
 
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
@@ -66,8 +65,7 @@ uint16_t HX717DataPins[NUM_OF_CELLS] = {
     CELL5_Pin,
     CELL6_Pin};
 int32_t RawCellReadings[NUM_OF_CELLS];
-uint8_t PulseCounter = 0;
-uint16_t ClockPulses[25] = {[0 ... 24] = 4};
+int8_t PulseCounter = -1;
 
 uint16_t RawADCReadings[2];
 float Voltage;
@@ -98,7 +96,7 @@ static void MX_TIM16_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM15_Init(void);
 /* USER CODE BEGIN PFP */
-
+void HX717_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -143,7 +141,7 @@ int main(void)
     MX_TIM3_Init();
     MX_TIM15_Init();
     /* USER CODE BEGIN 2 */
-
+    HX717_Init();
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -317,7 +315,7 @@ static void MX_TIM3_Init(void)
         Error_Handler();
     }
     sConfigOC.OCMode = TIM_OCMODE_PWM1;
-    sConfigOC.Pulse = 5;
+    sConfigOC.Pulse = 4;
     sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
     sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
     if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
@@ -325,7 +323,7 @@ static void MX_TIM3_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN TIM3_Init 2 */
-    HAL_TIM_Base_Start_IT(&htim3);
+
     /* USER CODE END TIM3_Init 2 */
     HAL_TIM_MspPostInit(&htim3);
 }
@@ -578,9 +576,6 @@ static void MX_DMA_Init(void)
     /* DMA1_Channel1_IRQn interrupt configuration */
     HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-    /* DMA1_Channel2_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 }
 
 /**
@@ -612,34 +607,28 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HX717_Init(void)
+{
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 20); // 100% duty cycle
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+    HAL_Delay(1); // wait
+    __HAL_TIM_SET_COUNTER(&htim3, 0xffff);
+    HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_1);
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 4);
+    PulseCounter = 0;
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    // cell amp clock
-    if (htim == &htim3)
-    {
-        // read all the bits
-        if (PulseCounter < 24)
-        {
-            for (int i = 0; i < NUM_OF_CELLS; i++)
-            {
-                RawCellReadings[i] <<= 1;
-                if (HAL_GPIO_ReadPin(HX717DataPorts[i], HX717DataPins[i]))
-                {
-                    RawCellReadings[i] |= 1;
-                }
-            }
-            PulseCounter++;
-        }
-    }
-
     // periodic interrupt
     if (htim == &htim15)
     {
         // start next cycle read
-        if (HAL_GPIO_ReadPin(GPIOB, CELL1_Pin | CELL2_Pin | CELL3_Pin | CELL4_Pin | CELL5_Pin | CELL6_Pin) == 0)
+        if (HAL_GPIO_ReadPin(GPIOB, CELL1_Pin | CELL2_Pin | CELL3_Pin | CELL4_Pin | CELL5_Pin | CELL6_Pin) == 0 && PulseCounter == 0)
         {
             // read channel A with 128 gain (HX717 datasheet)
-            HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t *)ClockPulses, 25);
+            // HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t *)ClockPulses, 25);
+            HAL_TIM_PWM_Start_IT(&htim3, TIM_CHANNEL_1);
         }
 
         // start adc reading
@@ -687,11 +676,29 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 {
+    // cell amp clock falling edge
     if (htim == &htim3)
     {
-        __HAL_TIM_SET_COUNTER(&htim3, 0xffff);       // set pin low
-        HAL_TIM_PWM_Stop_DMA(&htim3, TIM_CHANNEL_1); // stop clock pulses
-        PulseCounter = 0;                            // reset counter
+        PulseCounter++;
+
+        // read all the bits
+        if (PulseCounter <= 24)
+        {
+            for (int i = 0; i < NUM_OF_CELLS; i++)
+            {
+                RawCellReadings[i] <<= 1;
+                if (HAL_GPIO_ReadPin(HX717DataPorts[i], HX717DataPins[i]))
+                {
+                    RawCellReadings[i] |= 1;
+                }
+            }
+        }
+        else if (PulseCounter >= 25)
+        {
+            __HAL_TIM_SET_COUNTER(&htim3, 0xffff);      // set pin low
+            HAL_TIM_PWM_Stop_IT(&htim3, TIM_CHANNEL_1); // stop clock pulses
+            PulseCounter = 0;                           // reset counter
+        }
     }
 }
 
@@ -713,10 +720,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         __HAL_TIM_SET_COUNTER(&htim16, 0);
 
         UARTATimedOut = 0; // reset flag
-        
+
         if (UARTARxByte == '\n' || UARTARxByte == '\r' || UARTARxCounter >= UART_RX_BUFFER_SIZE)
         {
-            UARTARxBuffer[UARTARxCounter] = 0; // put line ending
+            UARTARxBuffer[UARTARxCounter] = 0; // put string terminator
             UARTARxCounter = 0;                // reset counter
 
             float temp;
