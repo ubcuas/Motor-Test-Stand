@@ -71,6 +71,7 @@ uint16_t RawADCReadings[2];
 float Voltage;
 float Current;
 float VoltPerADC = 1.40822486624E-2F;
+float VoltOffset = 0.0F;
 float AmpPerADC = 2.6271654212E-2F;
 float AmpOffset = 50;
 
@@ -707,7 +708,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     if (hadc == &hadc2)
     {
         // convert raw to volts and amps
-        Voltage = (float)RawADCReadings[0] * VoltPerADC;
+        Voltage = (float)RawADCReadings[0] * VoltPerADC - VoltOffset;
         Current = (float)RawADCReadings[1] * AmpPerADC - AmpOffset;
     }
 }
@@ -730,16 +731,21 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
             switch (UARTARxBuffer[0])
             {
-            case 'V':
+            case 'v':
                 sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
                 VoltPerADC *= temp;
+                VoltOffset *= temp;
                 break;
-            case 'A':
+            case 'V':
+                sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
+                VoltOffset += temp;
+                break;
+            case 'a':
                 sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
                 AmpPerADC *= temp;
                 AmpOffset *= temp;
                 break;
-            case 'O':
+            case 'A':
                 sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
                 AmpOffset += temp;
                 break;
