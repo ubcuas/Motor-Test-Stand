@@ -79,15 +79,10 @@ void Error_Handler(void);
 #define UARTA_TX_GPIO_Port GPIOC
 #define UARTA_RX_Pin GPIO_PIN_11
 #define UARTA_RX_GPIO_Port GPIOC
-#define UARTB_TX_Pin GPIO_PIN_3
-#define UARTB_TX_GPIO_Port GPIOB
-#define UARTB_RX_Pin GPIO_PIN_4
-#define UARTB_RX_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 #define NUM_OF_CELLS 6
 #define HUARTA huart3
-#define HUARTB huart2
 #define UART_RX_BUFFER_SIZE 20
 #define UART_TX_BUFFER_SIZE 200
 /* USER CODE END Private defines */
