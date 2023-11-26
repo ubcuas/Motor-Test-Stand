@@ -46,7 +46,7 @@ namespace UAS_Thrustlink
             // also check if the serial port is disconnected or no
             try
             {
-                serialPort1.Write(pulseNumericBox.Value.ToString() + "\n");
+                serialPort1.Write("P" + pulseNumericBox.Value.ToString() + "\n");
                 // richTextBox1.AppendText(DateTime.Now.ToString("HH:mm:ss:fff") + " Sent " + pulseNumericBox.Value.ToString() + "\n");
             }
             catch (Exception ex)

@@ -725,34 +725,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             UARTARxBuffer[UARTARxCounter] = 0; // put string terminator
             UARTARxCounter = 0;                // reset counter
 
-            float temp;
-
-            switch (UARTARxBuffer[0])
+            if (UARTARxBuffer[0] == 'P')
             {
-            case 'v':
-                sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
-                VoltPerADC *= temp;
-                VoltOffset *= temp;
-                break;
-            case 'V':
-                sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
-                VoltOffset += temp;
-                break;
-            case 'a':
-                sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
-                AmpPerADC *= temp;
-                AmpOffset *= temp;
-                break;
-            case 'A':
-                sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
-                AmpOffset += temp;
-                break;
-            default:
                 // save and set esc pulse
-                int receivedPulse = (UARTARxBuffer[0] - '0') * 1000  //
-                                    + (UARTARxBuffer[1] - '0') * 100 //
-                                    + (UARTARxBuffer[2] - '0') * 10  //
-                                    + (UARTARxBuffer[3] - '0');      //
+                int receivedPulse = (UARTARxBuffer[1] - '0') * 1000  //
+                                    + (UARTARxBuffer[2] - '0') * 100 //
+                                    + (UARTARxBuffer[3] - '0') * 10  //
+                                    + (UARTARxBuffer[4] - '0');      //
 
                 if (receivedPulse >= 1000 && receivedPulse <= 2000)
                 {
@@ -763,7 +742,31 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                     }
                     PrevESCPulse = receivedPulse;
                 }
-                break;
+            }
+            else
+            {
+                float temp;
+                sscanf((char *)(&UARTARxBuffer[1]), "%f", &temp);
+
+                switch (UARTARxBuffer[0])
+                {
+                case 'v':
+                    VoltPerADC *= temp;
+                    VoltOffset *= temp;
+                    break;
+                case 'V':
+                    VoltOffset += temp;
+                    break;
+                case 'a':
+                    AmpPerADC *= temp;
+                    AmpOffset *= temp;
+                    break;
+                case 'A':
+                    AmpOffset += temp;
+                    break;
+                default:
+                    break;
+                }
             }
         }
         else
