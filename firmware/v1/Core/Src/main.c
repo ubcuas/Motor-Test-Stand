@@ -530,7 +530,7 @@ static void MX_USART3_UART_Init(void)
 
     /* USER CODE END USART3_Init 1 */
     huart3.Instance = USART3;
-    huart3.Init.BaudRate = 115200;
+    huart3.Init.BaudRate = 250000;
     huart3.Init.WordLength = UART_WORDLENGTH_8B;
     huart3.Init.StopBits = UART_STOPBITS_1;
     huart3.Init.Parity = UART_PARITY_NONE;
@@ -539,9 +539,7 @@ static void MX_USART3_UART_Init(void)
     huart3.Init.OverSampling = UART_OVERSAMPLING_16;
     huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
     huart3.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-    huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_AUTOBAUDRATE_INIT;
-    huart3.AdvancedInit.AutoBaudRateEnable = UART_ADVFEATURE_AUTOBAUDRATE_ENABLE;
-    huart3.AdvancedInit.AutoBaudRateMode = UART_ADVFEATURE_AUTOBAUDRATE_ONSTARTBIT;
+    huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
     if (HAL_UART_Init(&huart3) != HAL_OK)
     {
         Error_Handler();
