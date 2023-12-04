@@ -65,13 +65,13 @@ void Error_Handler(void);
 #define CELL1_GPIO_Port GPIOB
 #define CELL2_Pin GPIO_PIN_1
 #define CELL2_GPIO_Port GPIOB
-#define CELL3_Pin GPIO_PIN_12
+#define CELL3_Pin GPIO_PIN_2
 #define CELL3_GPIO_Port GPIOB
-#define CELL4_Pin GPIO_PIN_13
+#define CELL4_Pin GPIO_PIN_11
 #define CELL4_GPIO_Port GPIOB
-#define CELL5_Pin GPIO_PIN_14
+#define CELL5_Pin GPIO_PIN_12
 #define CELL5_GPIO_Port GPIOB
-#define CELL6_Pin GPIO_PIN_15
+#define CELL6_Pin GPIO_PIN_13
 #define CELL6_GPIO_Port GPIOB
 #define CELLAMP_CLK_Pin GPIO_PIN_6
 #define CELLAMP_CLK_GPIO_Port GPIOC

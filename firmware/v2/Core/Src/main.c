@@ -43,6 +43,7 @@ DMA_HandleTypeDef hdma_adc2;
 
 I2C_HandleTypeDef hi2c2;
 
+TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim15;
 TIM_HandleTypeDef htim16;
@@ -97,6 +98,7 @@ static void MX_TIM16_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM15_Init(void);
 static void MX_I2C2_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 void HX717_Init(void);
 /* USER CODE END PFP */
@@ -142,6 +144,7 @@ int main(void)
     MX_TIM3_Init();
     MX_TIM15_Init();
     MX_I2C2_Init();
+    MX_TIM2_Init();
     /* USER CODE BEGIN 2 */
     HX717_Init();
     /* USER CODE END 2 */
@@ -317,6 +320,64 @@ static void MX_I2C2_Init(void)
     /* USER CODE BEGIN I2C2_Init 2 */
 
     /* USER CODE END I2C2_Init 2 */
+}
+
+/**
+ * @brief TIM2 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM2_Init(void)
+{
+
+    /* USER CODE BEGIN TIM2_Init 0 */
+
+    /* USER CODE END TIM2_Init 0 */
+
+    TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+    TIM_MasterConfigTypeDef sMasterConfig = {0};
+    TIM_OC_InitTypeDef sConfigOC = {0};
+
+    /* USER CODE BEGIN TIM2_Init 1 */
+
+    /* USER CODE END TIM2_Init 1 */
+    htim2.Instance = TIM2;
+    htim2.Init.Prescaler = 150 - 1;
+    htim2.Init.CounterMode = TIM_COUNTERMODE_DOWN;
+    htim2.Init.Period = 10;
+    htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+    if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    sConfigOC.OCMode = TIM_OCMODE_PWM1;
+    sConfigOC.Pulse = 5;
+    sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+    sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+    if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN TIM2_Init 2 */
+
+    /* USER CODE END TIM2_Init 2 */
+    HAL_TIM_MspPostInit(&htim2);
 }
 
 /**
