@@ -67,14 +67,14 @@ void Error_Handler(void);
 #define CELL2_GPIO_Port GPIOB
 #define CELL3_Pin GPIO_PIN_2
 #define CELL3_GPIO_Port GPIOB
+#define CELLAMP_CLK_Pin GPIO_PIN_10
+#define CELLAMP_CLK_GPIO_Port GPIOB
 #define CELL4_Pin GPIO_PIN_11
 #define CELL4_GPIO_Port GPIOB
 #define CELL5_Pin GPIO_PIN_12
 #define CELL5_GPIO_Port GPIOB
 #define CELL6_Pin GPIO_PIN_13
 #define CELL6_GPIO_Port GPIOB
-#define CELLAMP_CLK_Pin GPIO_PIN_6
-#define CELLAMP_CLK_GPIO_Port GPIOC
 #define UARTA_TX_Pin GPIO_PIN_10
 #define UARTA_TX_GPIO_Port GPIOC
 #define UARTA_RX_Pin GPIO_PIN_11
@@ -85,6 +85,12 @@ void Error_Handler(void);
 #define HUARTA huart3
 #define UART_RX_BUFFER_SIZE 20
 #define UART_TX_BUFFER_SIZE 200
+#define CELLAMP_CLK_HTIM htim2
+#define CELLAMP_CLK_CHANNEL TIM_CHANNEL_3
+#define ESCSIG_HTIM htim17
+#define ESCSIG_CHANNEL TIM_CHANNEL_1
+#define UART_TIMEOUT_HTIM htim16
+#define PERIODIC_INT_HTIM htim15
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
