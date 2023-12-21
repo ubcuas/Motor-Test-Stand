@@ -88,7 +88,7 @@ uint8_t UARTATimedOut = 0;
 uint16_t ESCPulse = 1000;
 uint16_t PrevESCPulse;
 
-uint8_t EEPROMWriteBuffer[16]; // 16 bytes page size
+uint8_t EEPROMWriteBuffer[EEPROM_PAGE_SIZE]; // 16 bytes page size
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -627,8 +627,20 @@ void HX717_Init(void)
 
 void ReadEEPROM(void)
 {
-    uint8_t readBuffer[16 * 4];
-    HAL_I2C_Mem_Read(&hi2c2, 0x50 << 1, 0x00, 1, readBuffer, 16 * 4, 1000);
+    /*
+    EEPROM layout:
+    +-------+-------------+-------------+-------------+-------------+
+    |       | 00 01 02 03 | 04 05 06 07 | 08 09 0a 0b | 0c 0d 0e 0f |
+    +-------+-------------+-------------+-------------+-------------+
+    | 0x00: | V mult      | V offset    | A mult      | A offset    |
+    | 0x10: | F1 mult     | F1 offset   | F2 mult     | F2 offset   |
+    | 0x20: | F3 mult     | F3 offset   | F4 mult     | F4 offset   |
+    | 0x30: | F5 mult     | F5 offset   | F6 mult     | F6 offset   |
+    +-------+-------------+-------------+-------------+-------------+
+    */
+
+    uint8_t readBuffer[EEPROM_PAGE_SIZE * 4];
+    HAL_I2C_Mem_Read(&hi2c2, EEPROM_DEVICE_ADDR << 1, 0x00, 1, readBuffer, EEPROM_PAGE_SIZE * 4, 1000);
 
     memcpy((uint8_t *)(&VoltPerADC), &readBuffer[4 * 0], 4);
     memcpy((uint8_t *)(&VoltOffset), &readBuffer[4 * 1], 4);
@@ -797,7 +809,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                     // write to eeprom
                     memcpy(&EEPROMWriteBuffer[0], (uint8_t *)(&ForcePerADC[cellNum]), 4);
                     memcpy(&EEPROMWriteBuffer[4], (uint8_t *)(&ForceOffset[cellNum]), 4);
-                    HAL_I2C_Mem_Write_IT(&hi2c2, 0x50 << 1, (uint8_t)(0x10 + cellNum * 8), 1, EEPROMWriteBuffer, 8);
+                    HAL_I2C_Mem_Write_IT(&hi2c2, EEPROM_DEVICE_ADDR << 1, (uint8_t)(0x10 + cellNum * 8), 1, EEPROMWriteBuffer, 8);
                 }
             }
             else
@@ -830,7 +842,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                 memcpy(&EEPROMWriteBuffer[4], (uint8_t *)(&VoltOffset), 4);
                 memcpy(&EEPROMWriteBuffer[8], (uint8_t *)(&AmpPerADC), 4);
                 memcpy(&EEPROMWriteBuffer[12], (uint8_t *)(&AmpOffset), 4);
-                HAL_I2C_Mem_Write_IT(&hi2c2, 0x50 << 1, 0x00, 1, EEPROMWriteBuffer, 16);
+                HAL_I2C_Mem_Write_IT(&hi2c2, EEPROM_DEVICE_ADDR << 1, 0x00, 1, EEPROMWriteBuffer, EEPROM_PAGE_SIZE);
             }
         }
         else
