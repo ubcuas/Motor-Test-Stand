@@ -151,6 +151,10 @@ int main(void)
     /* USER CODE BEGIN 2 */
     HX717_Init();
     ReadEEPROM();
+
+    HAL_TIM_PWM_Start(&ESCSIG_HTIM, ESCSIG_CHANNEL);
+    HAL_TIM_Base_Start_IT(&UART_TIMEOUT_HTIM);
+    HAL_TIM_Base_Start_IT(&PERIODIC_INT_HTIM);
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -348,7 +352,7 @@ static void MX_TIM2_Init(void)
     htim2.Instance = TIM2;
     htim2.Init.Prescaler = 150 - 1;
     htim2.Init.CounterMode = TIM_COUNTERMODE_DOWN;
-    htim2.Init.Period = 10;
+    htim2.Init.Period = 15;
     htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -371,7 +375,7 @@ static void MX_TIM2_Init(void)
         Error_Handler();
     }
     sConfigOC.OCMode = TIM_OCMODE_PWM1;
-    sConfigOC.Pulse = 5;
+    sConfigOC.Pulse = 10;
     sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
     sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
     if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
@@ -425,7 +429,7 @@ static void MX_TIM15_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN TIM15_Init 2 */
-    HAL_TIM_Base_Start_IT(&PERIODIC_INT_HTIM);
+
     /* USER CODE END TIM15_Init 2 */
 }
 
@@ -456,7 +460,7 @@ static void MX_TIM16_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN TIM16_Init 2 */
-    HAL_TIM_Base_Start_IT(&UART_TIMEOUT_HTIM);
+
     /* USER CODE END TIM16_Init 2 */
 }
 
@@ -517,7 +521,7 @@ static void MX_TIM17_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN TIM17_Init 2 */
-    HAL_TIM_PWM_Start(&ESCSIG_HTIM, ESCSIG_CHANNEL);
+
     /* USER CODE END TIM17_Init 2 */
     HAL_TIM_MspPostInit(&htim17);
 }
@@ -621,7 +625,7 @@ void HX717_Init(void)
     HAL_Delay(1); // wait
     __HAL_TIM_SET_COUNTER(&CELLAMP_CLK_HTIM, 0xffff);
     HAL_TIM_PWM_Stop(&CELLAMP_CLK_HTIM, CELLAMP_CLK_CHANNEL);
-    __HAL_TIM_SET_COMPARE(&CELLAMP_CLK_HTIM, CELLAMP_CLK_CHANNEL, 4);
+    __HAL_TIM_SET_COMPARE(&CELLAMP_CLK_HTIM, CELLAMP_CLK_CHANNEL, 10);
     PulseCounter = 0;
 }
 
