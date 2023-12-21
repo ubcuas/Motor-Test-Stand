@@ -71,10 +71,13 @@ int8_t PulseCounter = -1;
 uint16_t RawADCReadings[2];
 float Voltage;
 float Current;
-float VoltPerADC = 1.40822486624E-2F;
-float VoltOffset = 0.0F;
-float AmpPerADC = 2.6271654212E-2F;
-float AmpOffset = 50;
+float VoltPerADC;
+float VoltOffset;
+float AmpPerADC;
+float AmpOffset;
+
+float ForcePerADC[NUM_OF_CELLS];
+float ForceOffset[NUM_OF_CELLS];
 
 uint8_t UARTARxCounter = 0;
 uint8_t UARTARxByte;
@@ -84,6 +87,8 @@ uint8_t UARTATimedOut = 0;
 
 uint16_t ESCPulse = 1000;
 uint16_t PrevESCPulse;
+
+uint8_t EEPROMWriteBuffer[16]; // 16 bytes page size
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -99,6 +104,7 @@ static void MX_I2C2_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 void HX717_Init(void);
+void ReadEEPROM(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -144,6 +150,7 @@ int main(void)
     MX_TIM2_Init();
     /* USER CODE BEGIN 2 */
     HX717_Init();
+    ReadEEPROM();
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -418,7 +425,7 @@ static void MX_TIM15_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN TIM15_Init 2 */
-    HAL_TIM_Base_Start_IT(&htim15);
+    HAL_TIM_Base_Start_IT(&PERIODIC_INT_HTIM);
     /* USER CODE END TIM15_Init 2 */
 }
 
@@ -449,7 +456,7 @@ static void MX_TIM16_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN TIM16_Init 2 */
-    HAL_TIM_Base_Start_IT(&htim16);
+    HAL_TIM_Base_Start_IT(&UART_TIMEOUT_HTIM);
     /* USER CODE END TIM16_Init 2 */
 }
 
@@ -510,7 +517,7 @@ static void MX_TIM17_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN TIM17_Init 2 */
-    HAL_TIM_PWM_Start(&htim17, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&ESCSIG_HTIM, ESCSIG_CHANNEL);
     /* USER CODE END TIM17_Init 2 */
     HAL_TIM_MspPostInit(&htim17);
 }
@@ -609,25 +616,48 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HX717_Init(void)
 {
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 20); // 100% duty cycle
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+    __HAL_TIM_SET_COMPARE(&CELLAMP_CLK_HTIM, CELLAMP_CLK_CHANNEL, 20); // 100% duty cycle
+    HAL_TIM_PWM_Start(&CELLAMP_CLK_HTIM, CELLAMP_CLK_CHANNEL);
     HAL_Delay(1); // wait
-    __HAL_TIM_SET_COUNTER(&htim3, 0xffff);
-    HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_1);
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 4);
+    __HAL_TIM_SET_COUNTER(&CELLAMP_CLK_HTIM, 0xffff);
+    HAL_TIM_PWM_Stop(&CELLAMP_CLK_HTIM, CELLAMP_CLK_CHANNEL);
+    __HAL_TIM_SET_COMPARE(&CELLAMP_CLK_HTIM, CELLAMP_CLK_CHANNEL, 4);
     PulseCounter = 0;
+}
+
+void ReadEEPROM(void)
+{
+    uint8_t readBuffer[16 * 4];
+    HAL_I2C_Mem_Read(&hi2c2, 0x50 << 1, 0x00, 1, readBuffer, 16 * 4, 1000);
+
+    memcpy((uint8_t *)(&VoltPerADC), &readBuffer[4 * 0], 4);
+    memcpy((uint8_t *)(&VoltOffset), &readBuffer[4 * 1], 4);
+    memcpy((uint8_t *)(&AmpPerADC), &readBuffer[4 * 2], 4);
+    memcpy((uint8_t *)(&AmpOffset), &readBuffer[4 * 3], 4);
+    memcpy((uint8_t *)(&ForcePerADC[0]), &readBuffer[4 * 4], 4);
+    memcpy((uint8_t *)(&ForceOffset[0]), &readBuffer[4 * 5], 4);
+    memcpy((uint8_t *)(&ForcePerADC[1]), &readBuffer[4 * 6], 4);
+    memcpy((uint8_t *)(&ForceOffset[1]), &readBuffer[4 * 7], 4);
+    memcpy((uint8_t *)(&ForcePerADC[2]), &readBuffer[4 * 8], 4);
+    memcpy((uint8_t *)(&ForceOffset[2]), &readBuffer[4 * 9], 4);
+    memcpy((uint8_t *)(&ForcePerADC[3]), &readBuffer[4 * 10], 4);
+    memcpy((uint8_t *)(&ForceOffset[3]), &readBuffer[4 * 11], 4);
+    memcpy((uint8_t *)(&ForcePerADC[4]), &readBuffer[4 * 12], 4);
+    memcpy((uint8_t *)(&ForceOffset[4]), &readBuffer[4 * 13], 4);
+    memcpy((uint8_t *)(&ForcePerADC[5]), &readBuffer[4 * 14], 4);
+    memcpy((uint8_t *)(&ForceOffset[5]), &readBuffer[4 * 15], 4);
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     // periodic interrupt
-    if (htim == &htim15)
+    if (htim == &PERIODIC_INT_HTIM)
     {
         // start next cycle read
         if (HAL_GPIO_ReadPin(GPIOB, CELL1_Pin | CELL2_Pin | CELL3_Pin | CELL4_Pin | CELL5_Pin | CELL6_Pin) == 0 && PulseCounter == 0)
         {
             // read channel A with 128 gain (HX717 datasheet)
-            HAL_TIM_PWM_Start_IT(&htim3, TIM_CHANNEL_1);
+            HAL_TIM_PWM_Start_IT(&CELLAMP_CLK_HTIM, CELLAMP_CLK_CHANNEL);
         }
 
         // start adc reading
@@ -649,12 +679,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             }
 
             // cook the string
-            int bufferSize = sprintf((char *)UARTATxBuffer, "%u %.2f %.2f", ESCPulse, Voltage, Current);
+            int bufferSize = sprintf((char *)UARTATxBuffer, "%u %.3f %.3f", ESCPulse, Voltage, Current);
             for (int i = 0; i < NUM_OF_CELLS; i++)
             {
-                bufferSize += sprintf(((char *)UARTATxBuffer + bufferSize), " %ld", RawCellReadings[i]);
+                bufferSize += sprintf((char *)UARTATxBuffer + bufferSize, " %.3f", (float)RawCellReadings[i] * ForcePerADC[i] - ForceOffset[i]);
             }
-            bufferSize += sprintf(((char *)UARTATxBuffer + bufferSize), "\n");
+            bufferSize += sprintf((char *)UARTATxBuffer + bufferSize, "\n");
 
             // write to serial
             HAL_UART_Transmit_IT(&HUARTA, UARTATxBuffer, bufferSize);
@@ -662,10 +692,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 
     // uart timeout
-    if (htim == &htim16)
+    if (htim == &UART_TIMEOUT_HTIM)
     {
         ESCPulse = 1000; // set throttle to 0%
-        __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
+        __HAL_TIM_SET_COMPARE(&ESCSIG_HTIM, ESCSIG_CHANNEL, ESCPulse);
         UARTATimedOut = 1; // set flag
 
         // failsafe calling
@@ -676,7 +706,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 {
     // cell amp clock falling edge
-    if (htim == &htim3)
+    if (htim == &CELLAMP_CLK_HTIM)
     {
         PulseCounter++;
 
@@ -694,9 +724,9 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
         }
         else if (PulseCounter >= 25)
         {
-            __HAL_TIM_SET_COUNTER(&htim3, 0xffff);      // set pin low
-            HAL_TIM_PWM_Stop_IT(&htim3, TIM_CHANNEL_1); // stop clock pulses
-            PulseCounter = 0;                           // reset counter
+            __HAL_TIM_SET_COUNTER(&CELLAMP_CLK_HTIM, 0xffff);            // set pin low
+            HAL_TIM_PWM_Stop_IT(&CELLAMP_CLK_HTIM, CELLAMP_CLK_CHANNEL); // stop clock pulses
+            PulseCounter = 0;                                            // reset counter
         }
     }
 }
@@ -716,7 +746,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     if (huart == &HUARTA)
     {
         // reset uart timeout timer
-        __HAL_TIM_SET_COUNTER(&htim16, 0);
+        __HAL_TIM_SET_COUNTER(&UART_TIMEOUT_HTIM, 0);
 
         UARTATimedOut = 0; // reset flag
 
@@ -738,9 +768,36 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                     if (receivedPulse == PrevESCPulse)
                     {
                         ESCPulse = receivedPulse;
-                        __HAL_TIM_SET_COMPARE(&htim17, TIM_CHANNEL_1, ESCPulse);
+                        __HAL_TIM_SET_COMPARE(&ESCSIG_HTIM, ESCSIG_CHANNEL, ESCPulse);
                     }
                     PrevESCPulse = receivedPulse;
+                }
+            }
+            else if (UARTARxBuffer[0] == 'f' || UARTARxBuffer[0] == 'F')
+            {
+                uint8_t cellNum = UARTARxBuffer[1] - '1';
+                if (cellNum >= 0 && cellNum <= 5)
+                {
+                    float temp;
+                    sscanf((char *)(&UARTARxBuffer[2]), "%f", &temp);
+
+                    switch (UARTARxBuffer[0])
+                    {
+                    case 'f':
+                        ForcePerADC[cellNum] *= temp;
+                        ForceOffset[cellNum] *= temp;
+                        break;
+                    case 'F':
+                        ForceOffset[cellNum] += temp;
+                        break;
+                    default:
+                        break;
+                    }
+
+                    // write to eeprom
+                    memcpy(&EEPROMWriteBuffer[0], (uint8_t *)(&ForcePerADC[cellNum]), 4);
+                    memcpy(&EEPROMWriteBuffer[4], (uint8_t *)(&ForceOffset[cellNum]), 4);
+                    HAL_I2C_Mem_Write_IT(&hi2c2, 0x50 << 1, (uint8_t)(0x10 + cellNum * 8), 1, EEPROMWriteBuffer, 8);
                 }
             }
             else
@@ -767,6 +824,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                 default:
                     break;
                 }
+
+                // write to eeprom
+                memcpy(&EEPROMWriteBuffer[0], (uint8_t *)(&VoltPerADC), 4);
+                memcpy(&EEPROMWriteBuffer[4], (uint8_t *)(&VoltOffset), 4);
+                memcpy(&EEPROMWriteBuffer[8], (uint8_t *)(&AmpPerADC), 4);
+                memcpy(&EEPROMWriteBuffer[12], (uint8_t *)(&AmpOffset), 4);
+                HAL_I2C_Mem_Write_IT(&hi2c2, 0x50 << 1, 0x00, 1, EEPROMWriteBuffer, 16);
             }
         }
         else
