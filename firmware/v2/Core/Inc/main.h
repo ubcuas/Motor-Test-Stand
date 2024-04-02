@@ -89,8 +89,7 @@ void Error_Handler(void);
 #define CELLAMP_CLK_CHANNEL TIM_CHANNEL_3
 #define ESCSIG_HTIM htim17
 #define ESCSIG_CHANNEL TIM_CHANNEL_1
-#define UART_TIMEOUT_HTIM htim16
-#define PERIODIC_INT_HTIM htim15
+#define PERIODIC_INT_HTIM htim6
 #define EEPROM_DEVICE_ADDR 0x50
 #define EEPROM_PAGE_SIZE 16
 /* USER CODE END Private defines */
