@@ -217,9 +217,6 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
 
     /* Peripheral clock enable */
     __HAL_RCC_I2C2_CLK_ENABLE();
-    /* I2C2 interrupt Init */
-    HAL_NVIC_SetPriority(I2C2_EV_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(I2C2_EV_IRQn);
   /* USER CODE BEGIN I2C2_MspInit 1 */
 
   /* USER CODE END I2C2_MspInit 1 */
@@ -251,8 +248,6 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)
 
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9);
 
-    /* I2C2 interrupt DeInit */
-    HAL_NVIC_DisableIRQ(I2C2_EV_IRQn);
   /* USER CODE BEGIN I2C2_MspDeInit 1 */
 
   /* USER CODE END I2C2_MspDeInit 1 */
@@ -276,39 +271,25 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
     /* Peripheral clock enable */
     __HAL_RCC_TIM2_CLK_ENABLE();
     /* TIM2 interrupt Init */
-    HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(TIM2_IRQn, 2, 0);
     HAL_NVIC_EnableIRQ(TIM2_IRQn);
   /* USER CODE BEGIN TIM2_MspInit 1 */
 
   /* USER CODE END TIM2_MspInit 1 */
   }
-  else if(htim_base->Instance==TIM15)
+  else if(htim_base->Instance==TIM6)
   {
-  /* USER CODE BEGIN TIM15_MspInit 0 */
+  /* USER CODE BEGIN TIM6_MspInit 0 */
 
-  /* USER CODE END TIM15_MspInit 0 */
+  /* USER CODE END TIM6_MspInit 0 */
     /* Peripheral clock enable */
-    __HAL_RCC_TIM15_CLK_ENABLE();
-    /* TIM15 interrupt Init */
-    HAL_NVIC_SetPriority(TIM1_BRK_TIM15_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(TIM1_BRK_TIM15_IRQn);
-  /* USER CODE BEGIN TIM15_MspInit 1 */
+    __HAL_RCC_TIM6_CLK_ENABLE();
+    /* TIM6 interrupt Init */
+    HAL_NVIC_SetPriority(TIM6_DAC_IRQn, 3, 0);
+    HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);
+  /* USER CODE BEGIN TIM6_MspInit 1 */
 
-  /* USER CODE END TIM15_MspInit 1 */
-  }
-  else if(htim_base->Instance==TIM16)
-  {
-  /* USER CODE BEGIN TIM16_MspInit 0 */
-
-  /* USER CODE END TIM16_MspInit 0 */
-    /* Peripheral clock enable */
-    __HAL_RCC_TIM16_CLK_ENABLE();
-    /* TIM16 interrupt Init */
-    HAL_NVIC_SetPriority(TIM1_UP_TIM16_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(TIM1_UP_TIM16_IRQn);
-  /* USER CODE BEGIN TIM16_MspInit 1 */
-
-  /* USER CODE END TIM16_MspInit 1 */
+  /* USER CODE END TIM6_MspInit 1 */
   }
   else if(htim_base->Instance==TIM17)
   {
@@ -392,33 +373,19 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* htim_base)
 
   /* USER CODE END TIM2_MspDeInit 1 */
   }
-  else if(htim_base->Instance==TIM15)
+  else if(htim_base->Instance==TIM6)
   {
-  /* USER CODE BEGIN TIM15_MspDeInit 0 */
+  /* USER CODE BEGIN TIM6_MspDeInit 0 */
 
-  /* USER CODE END TIM15_MspDeInit 0 */
+  /* USER CODE END TIM6_MspDeInit 0 */
     /* Peripheral clock disable */
-    __HAL_RCC_TIM15_CLK_DISABLE();
+    __HAL_RCC_TIM6_CLK_DISABLE();
 
-    /* TIM15 interrupt DeInit */
-    HAL_NVIC_DisableIRQ(TIM1_BRK_TIM15_IRQn);
-  /* USER CODE BEGIN TIM15_MspDeInit 1 */
+    /* TIM6 interrupt DeInit */
+    HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
+  /* USER CODE BEGIN TIM6_MspDeInit 1 */
 
-  /* USER CODE END TIM15_MspDeInit 1 */
-  }
-  else if(htim_base->Instance==TIM16)
-  {
-  /* USER CODE BEGIN TIM16_MspDeInit 0 */
-
-  /* USER CODE END TIM16_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_TIM16_CLK_DISABLE();
-
-    /* TIM16 interrupt DeInit */
-    HAL_NVIC_DisableIRQ(TIM1_UP_TIM16_IRQn);
-  /* USER CODE BEGIN TIM16_MspDeInit 1 */
-
-  /* USER CODE END TIM16_MspDeInit 1 */
+  /* USER CODE END TIM6_MspDeInit 1 */
   }
   else if(htim_base->Instance==TIM17)
   {
@@ -475,7 +442,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
     /* USART3 interrupt Init */
-    HAL_NVIC_SetPriority(USART3_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(USART3_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(USART3_IRQn);
   /* USER CODE BEGIN USART3_MspInit 1 */
 
